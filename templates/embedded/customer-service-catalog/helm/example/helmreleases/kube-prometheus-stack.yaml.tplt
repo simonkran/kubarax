@@ -1,0 +1,30 @@
+{{- if eq (index .services "kubePrometheusStack").status "enabled" }}
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./managed-service-catalog/helm/kube-prometheus-stack
+      sourceRef:
+        kind: GitRepository
+        name: platform
+      interval: 5m
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: cert-manager
+    - name: traefik
+  values: {}
+{{- end }}

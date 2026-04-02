@@ -1,0 +1,23 @@
+oauth2-proxy:
+  config:
+    cookieName: "_kubarax_oauth2"
+  extraArgs:
+    provider: github
+    github-org: {{ .ssoOrg | default "" }}
+    github-team: {{ .ssoTeam | default "" }}
+    cookie-secure: "true"
+    upstream: "static://202"
+    email-domain: "*"
+    cookie-domain: ".{{ .dnsName }}"
+    whitelist-domain: ".{{ .dnsName }}"
+  ingress:
+    enabled: true
+    className: {{ .ingressClassName | default "traefik" }}
+    hosts:
+      - oauth2.{{ .dnsName }}
+    tls:
+      - secretName: oauth2-proxy-tls
+        hosts:
+          - oauth2.{{ .dnsName }}
+  serviceMonitor:
+    enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}

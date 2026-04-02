@@ -1,0 +1,10 @@
+external-dns:
+  sources:
+    - ingress
+    - service
+  policy: sync
+  txtOwnerId: {{ .name }}
+  domainFilters:
+    - {{ .dnsName }}
+  interval: "1m"
+  logLevel: info

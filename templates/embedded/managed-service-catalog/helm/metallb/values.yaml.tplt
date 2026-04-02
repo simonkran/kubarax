@@ -1,0 +1,12 @@
+metallb:
+  controller:
+    enabled: true
+  speaker:
+    enabled: true
+    frr:
+      enabled: false
+  prometheus:
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+    prometheusRule:
+      enabled: false

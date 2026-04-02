@@ -1,0 +1,29 @@
+kube-prometheus-stack:
+  fullnameOverride: prometheus
+  prometheus:
+    prometheusSpec:
+      retention: 15d
+      replicas: 1
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+  grafana:
+    enabled: true
+    adminPassword: ""
+    ingress:
+      enabled: true
+      ingressClassName: {{ .ingressClassName | default "traefik" }}
+      hosts:
+        - grafana.{{ .dnsName }}
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - grafana.{{ .dnsName }}
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      replicas: 1
+  kubeStateMetrics:
+    enabled: true
+  nodeExporter:
+    enabled: true

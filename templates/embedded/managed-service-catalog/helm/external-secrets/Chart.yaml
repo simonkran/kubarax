@@ -1,0 +1,9 @@
+apiVersion: v2
+name: external-secrets
+description: External Secrets Operator for Kubernetes
+version: 0.1.0
+type: application
+dependencies:
+  - name: external-secrets
+    version: "0.12.x"
+    repository: "https://charts.external-secrets.io"

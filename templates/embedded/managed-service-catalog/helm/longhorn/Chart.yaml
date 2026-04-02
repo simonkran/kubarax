@@ -1,0 +1,9 @@
+apiVersion: v2
+name: longhorn
+description: Longhorn - Cloud native distributed block storage for Kubernetes
+version: 0.1.0
+type: application
+dependencies:
+  - name: longhorn
+    version: "1.7.x"
+    repository: "https://charts.longhorn.io"

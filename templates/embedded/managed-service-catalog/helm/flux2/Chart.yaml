@@ -1,0 +1,9 @@
+apiVersion: v2
+name: flux2
+description: FluxCD v2 GitOps toolkit
+version: 0.1.0
+type: application
+dependencies:
+  - name: flux2
+    version: "2.14.x"
+    repository: "https://fluxcd-community.github.io/helm-charts"

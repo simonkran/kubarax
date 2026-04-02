@@ -1,0 +1,28 @@
+{{- if eq (index .services "homeDashboard").status "enabled" }}
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: homer-dashboard
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./managed-service-catalog/helm/homer-dashboard
+      sourceRef:
+        kind: GitRepository
+        name: platform
+      interval: 5m
+  targetNamespace: homer
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: cert-manager
+    - name: traefik
+  values: {}
+{{- end }}

@@ -1,0 +1,19 @@
+longhorn:
+  defaultSettings:
+    defaultReplicaCount: 2
+    backupTarget: ""
+    defaultDataLocality: best-effort
+    storageMinimalAvailablePercentage: 15
+  persistence:
+    defaultClass: true
+    defaultClassReplicaCount: 2
+  ingress:
+    enabled: true
+    ingressClassName: {{ .ingressClassName | default "traefik" }}
+    host: longhorn.{{ .dnsName }}
+    tls: true
+    tlsSecret: longhorn-tls
+  longhornUI:
+    replicas: 1
+  monitoring:
+    enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
