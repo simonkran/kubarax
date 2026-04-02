@@ -1,9 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - flux-system/gitrepository.yaml
+  # Flux Operator resources
+  - flux-operator/fluxinstance.yaml
+  - flux-operator/resourceset-platform.yaml
+  - flux-operator/resourceset-worker-clusters.yaml
+  # Flux sources
   - flux-system/kustomization.yaml
   - flux-system/helmrepositories.yaml
+  # HelmReleases for platform services
   - helmreleases/cert-manager.yaml
   - helmreleases/external-dns.yaml
   - helmreleases/external-secrets.yaml
@@ -15,5 +20,4 @@ resources:
   - helmreleases/oauth2-proxy.yaml
   - helmreleases/longhorn.yaml
   - helmreleases/metallb.yaml
-  - helmreleases/weave-gitops.yaml
   - helmreleases/homer-dashboard.yaml

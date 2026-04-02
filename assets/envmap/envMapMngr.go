@@ -123,8 +123,6 @@ func (em *EnvMapManager) setField(key, value string) {
 		em.config.HelmRepoPassword = value
 	case "HELM_REPO_URL":
 		em.config.HelmRepoURL = value
-	case "WEAVE_GITOPS_PASSWORD":
-		em.config.WeaveGitopsPassword = value
 	}
 }
 

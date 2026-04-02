@@ -1,0 +1,4 @@
+flux-operator:
+  # Web UI configuration
+  web:
+    enabled: {{ if .fluxcd.webUI.enabled }}true{{ else }}false{{ end }}

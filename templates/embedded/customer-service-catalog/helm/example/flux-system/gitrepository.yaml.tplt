@@ -1,18 +1,19 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: platform
-  namespace: flux-system
-spec:
-  interval: {{ .fluxcd.interval | default "5m" }}
-  url: {{ .fluxcd.gitRepository.url }}
-  ref:
-    {{- if .fluxcd.gitRepository.targetRevision }}
-    tag: {{ .fluxcd.gitRepository.targetRevision }}
-    {{- else }}
-    branch: {{ .fluxcd.gitRepository.branch | default "main" }}
-    {{- end }}
-  {{- if .fluxcd.gitRepository.secretRef }}
-  secretRef:
-    name: {{ .fluxcd.gitRepository.secretRef }}
-  {{- end }}
+# NOTE: The FluxInstance CR automatically creates a GitRepository named "flux-system"
+# in the flux-system namespace from the sync spec. This file documents the source
+# configuration but is NOT applied separately - the FluxInstance manages it.
+#
+# If you need additional GitRepository sources (e.g., for separate app repos),
+# create them here following this pattern:
+#
+# apiVersion: source.toolkit.fluxcd.io/v1
+# kind: GitRepository
+# metadata:
+#   name: my-app-repo
+#   namespace: flux-system
+# spec:
+#   interval: {{ .fluxcd.sync.interval | default "5m" }}
+#   url: https://github.com/org/my-app-repo
+#   ref:
+#     branch: main
+#   secretRef:
+#     name: my-app-repo-credentials

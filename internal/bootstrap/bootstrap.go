@@ -17,6 +17,7 @@ import (
 const (
 	fluxNamespace            = "flux-system"
 	externalSecretsNamespace = "external-secrets"
+	fluxOperatorOCIChart     = "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator"
 )
 
 // Options for bootstrap operations
@@ -45,7 +46,7 @@ type BootstrapChart struct {
 	EnsureCRD       bool
 }
 
-// Bootstrap orchestrates the complete FluxCD bootstrap process
+// Bootstrap orchestrates the complete Flux Operator bootstrap process
 func Bootstrap(ctx context.Context, opts *Options) error {
 	if opts.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -65,69 +66,301 @@ func Bootstrap(ctx context.Context, opts *Options) error {
 		return fmt.Errorf("creating kubernetes client: %w", err)
 	}
 
-	// Define the bootstrap charts
-	bootstrapCharts := buildBootstrapCharts(opts)
+	log.Info().Msg("Starting Flux Operator bootstrap process")
 
-	log.Info().Msg("Starting FluxCD bootstrap process")
-
-	// Step 1: Ensure namespaces exist
-	if err := ensureNamespaces(ctx, client, opts, bootstrapCharts); err != nil {
-		return fmt.Errorf("ensuring namespaces: %w", err)
+	// Step 1: Ensure flux-system namespace exists
+	if err := client.EnsureNamespace(ctx, fluxNamespace, opts.DryRun); err != nil {
+		return fmt.Errorf("ensuring flux-system namespace: %w", err)
 	}
 
-	// Step 2: Add helm repositories
-	if err := addHelmRepositories(ctx, bootstrapCharts); err != nil {
-		return fmt.Errorf("adding helm repositories: %w", err)
-	}
-
-	// Step 3: Update helm dependencies
-	if err := updateHelmDependencies(ctx, opts, bootstrapCharts); err != nil {
-		return fmt.Errorf("updating helm dependencies: %w", err)
-	}
-
-	// Step 4: Apply CRDs (FluxCD CRDs, external-secrets CRDs, prometheus CRDs)
-	if err := applyCRDs(ctx, client, opts, bootstrapCharts); err != nil {
-		return fmt.Errorf("applying CRDs: %w", err)
-	}
-	_ = client.RefreshDiscovery()
-
-	// Step 5: Apply secrets (git credentials, etc.)
+	// Step 2: Apply Git credentials secret (needed by FluxInstance sync)
 	if err := applySecrets(ctx, client, opts); err != nil {
 		return fmt.Errorf("applying secrets: %w", err)
 	}
 
-	// Step 6: Bootstrap FluxCD
-	if err := bootstrapFluxCD(ctx, client, opts, bootstrapCharts); err != nil {
-		return fmt.Errorf("bootstrapping FluxCD: %w", err)
+	// Step 3: Install the Flux Operator via Helm OCI chart
+	if err := installFluxOperator(ctx, client, opts); err != nil {
+		return fmt.Errorf("installing Flux Operator: %w", err)
 	}
 
-	// Step 7: Wait for FluxCD to be ready
-	if err := waitForFluxCD(ctx, client, opts); err != nil {
-		return fmt.Errorf("waiting for FluxCD readiness: %w", err)
+	// Step 4: Wait for the Flux Operator deployment to be ready
+	if err := waitForFluxOperator(ctx, client, opts); err != nil {
+		return fmt.Errorf("waiting for Flux Operator: %w", err)
 	}
 
-	// Step 8: Apply initial GitRepository and Kustomization sources
-	if err := applyFluxSources(ctx, client, opts); err != nil {
-		return fmt.Errorf("applying Flux sources: %w", err)
+	// Step 5: Refresh discovery so FluxInstance CRD is available
+	_ = client.RefreshDiscovery()
+
+	// Step 6: Create the FluxInstance CR (this triggers Flux controller installation + sync)
+	if err := applyFluxInstance(ctx, client, opts); err != nil {
+		return fmt.Errorf("applying FluxInstance: %w", err)
+	}
+
+	// Step 7: Wait for Flux controllers to be ready
+	if err := waitForFluxControllers(ctx, client, opts); err != nil {
+		return fmt.Errorf("waiting for Flux controllers: %w", err)
+	}
+
+	// Step 8: Optionally install additional bootstrap charts (external-secrets, prometheus CRDs)
+	if err := installAdditionalCharts(ctx, client, opts); err != nil {
+		return fmt.Errorf("installing additional charts: %w", err)
 	}
 
 	// Step 9: Print completion message
 	printCompletionMessage(opts)
-	log.Info().Msg("FluxCD bootstrap completed successfully")
+	log.Info().Msg("Flux Operator bootstrap completed successfully")
 	return nil
 }
 
-func buildBootstrapCharts(opts *Options) []BootstrapChart {
-	charts := []BootstrapChart{
-		{
-			Name:            "flux2",
-			Namespace:       fluxNamespace,
-			Path:            filepath.Join(opts.ManagedCatalog, "helm", "flux2"),
-			OverlayValues:   []string{filepath.Join(opts.OverlayValues, "helm", opts.ClusterName, "flux2", "values.yaml")},
-			RepoURL:         "https://fluxcd-community.github.io/helm-charts",
-			EnsureNamespace: true,
-			EnsureCRD:       true,
+func installFluxOperator(ctx context.Context, client *k8s.Client, opts *Options) error {
+	log.Info().Msg("Installing Flux Operator via Helm OCI chart")
+
+	webEnabled := "true"
+	if !opts.ClusterConfig.FluxCD.WebUI.Enabled {
+		webEnabled = "false"
+	}
+
+	// Template the flux-operator OCI chart
+	manifest, err := helm.Template(ctx, helm.TemplateOptions{
+		ReleaseName: "flux-operator",
+		ChartPath:   fluxOperatorOCIChart,
+		Namespace:   fluxNamespace,
+		SetArgs: []string{
+			"web.enabled=" + webEnabled,
 		},
+	})
+	if err != nil {
+		return fmt.Errorf("templating Flux Operator: %w", err)
+	}
+
+	if opts.DryRun {
+		log.Info().Msg("[DRY-RUN] Would apply Flux Operator manifest")
+		return nil
+	}
+
+	applyOpts := k8s.DefaultApplyOptions()
+	applyOpts.FieldManager = "kubarax-flux-operator-bootstrap"
+	applyOpts.ForceConflicts = true
+
+	if err := client.ApplyManifest(ctx, manifest, applyOpts); err != nil {
+		return fmt.Errorf("applying Flux Operator manifest: %w", err)
+	}
+
+	log.Info().Msg("Flux Operator installed successfully")
+	return nil
+}
+
+func waitForFluxOperator(ctx context.Context, client *k8s.Client, opts *Options) error {
+	if opts.DryRun {
+		log.Info().Msg("[DRY-RUN] Skipping wait for Flux Operator")
+		return nil
+	}
+
+	log.Info().Msg("Waiting for Flux Operator to be ready")
+	if err := client.WaitForDeployment(ctx, fluxNamespace, "flux-operator"); err != nil {
+		return fmt.Errorf("waiting for flux-operator deployment: %w", err)
+	}
+
+	log.Info().Msg("Flux Operator is ready")
+	return nil
+}
+
+func applyFluxInstance(ctx context.Context, client *k8s.Client, opts *Options) error {
+	log.Info().Msg("Creating FluxInstance CR")
+
+	manifest := buildFluxInstanceManifest(opts)
+
+	if opts.DryRun {
+		log.Info().Msg("[DRY-RUN] Would apply FluxInstance CR")
+		log.Info().Msgf("[DRY-RUN] FluxInstance manifest:\n%s", manifest)
+		return nil
+	}
+
+	applyOpts := k8s.DefaultApplyOptions()
+	applyOpts.FieldManager = "kubarax-flux-instance"
+	applyOpts.ForceConflicts = true
+
+	if err := client.ApplyManifest(ctx, []byte(manifest), applyOpts); err != nil {
+		return fmt.Errorf("applying FluxInstance: %w", err)
+	}
+
+	log.Info().Msg("FluxInstance CR applied successfully")
+	return nil
+}
+
+func buildFluxInstanceManifest(opts *Options) string {
+	fluxCfg := opts.ClusterConfig.FluxCD
+
+	// Distribution defaults
+	version := "2.x"
+	if fluxCfg.Distribution.Version != "" {
+		version = fluxCfg.Distribution.Version
+	}
+	registry := "ghcr.io/fluxcd"
+	if fluxCfg.Distribution.Registry != "" {
+		registry = fluxCfg.Distribution.Registry
+	}
+
+	// Cluster defaults
+	clusterType := "kubernetes"
+	if fluxCfg.Cluster.Type != "" {
+		clusterType = fluxCfg.Cluster.Type
+	}
+	clusterSize := "medium"
+	if fluxCfg.Cluster.Size != "" {
+		clusterSize = fluxCfg.Cluster.Size
+	}
+	networkPolicy := "true"
+	if !fluxCfg.Cluster.NetworkPolicy {
+		networkPolicy = "false"
+	}
+	multitenant := "false"
+	if fluxCfg.Cluster.Multitenant {
+		multitenant = "true"
+	}
+
+	// Sync defaults
+	syncKind := "GitRepository"
+	if fluxCfg.Sync.Kind != "" {
+		syncKind = fluxCfg.Sync.Kind
+	}
+	syncRef := "refs/heads/main"
+	if fluxCfg.Sync.Ref != "" {
+		syncRef = fluxCfg.Sync.Ref
+	}
+	syncPath := fmt.Sprintf("clusters/%s", opts.ClusterName)
+	if fluxCfg.Sync.Path != "" {
+		syncPath = fluxCfg.Sync.Path
+	}
+	syncInterval := "5m"
+	if fluxCfg.Sync.Interval != "" {
+		syncInterval = fluxCfg.Sync.Interval
+	}
+
+	// Build the sync.pullSecret reference
+	pullSecretBlock := ""
+	pullSecretName := "flux-git-credentials"
+	if fluxCfg.Sync.PullSecret != "" {
+		pullSecretName = fluxCfg.Sync.PullSecret
+	}
+	pullSecretBlock = fmt.Sprintf("    pullSecret: %s", pullSecretName)
+
+	return fmt.Sprintf(`apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+spec:
+  distribution:
+    version: "%s"
+    registry: "%s"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: %s
+    size: %s
+    multitenant: %s
+    networkPolicy: %s
+  sync:
+    kind: %s
+    url: "%s"
+    ref: "%s"
+    path: "%s"
+    interval: "%s"
+%s
+`, version, registry, clusterType, clusterSize, multitenant, networkPolicy,
+		syncKind, fluxCfg.Sync.URL, syncRef, syncPath, syncInterval, pullSecretBlock)
+}
+
+func waitForFluxControllers(ctx context.Context, client *k8s.Client, opts *Options) error {
+	if opts.DryRun {
+		log.Info().Msg("[DRY-RUN] Skipping wait for Flux controllers")
+		return nil
+	}
+
+	log.Info().Msg("Waiting for Flux controllers to be ready (managed by FluxInstance)")
+
+	controllers := []string{
+		"source-controller",
+		"kustomize-controller",
+		"helm-controller",
+		"notification-controller",
+	}
+
+	for _, controller := range controllers {
+		if err := client.WaitForDeployment(ctx, fluxNamespace, controller); err != nil {
+			return fmt.Errorf("waiting for %s: %w", controller, err)
+		}
+	}
+
+	log.Info().Msg("All Flux controllers are ready")
+	return nil
+}
+
+func installAdditionalCharts(ctx context.Context, client *k8s.Client, opts *Options) error {
+	charts := buildAdditionalCharts(opts)
+
+	for _, chart := range charts {
+		if !chart.EnsureCRD {
+			continue
+		}
+
+		if chart.EnsureNamespace {
+			if err := client.EnsureNamespace(ctx, chart.Namespace, opts.DryRun); err != nil {
+				return fmt.Errorf("ensuring %s namespace: %w", chart.Namespace, err)
+			}
+		}
+
+		// Add helm repo
+		repo := helm.RepoOptions{Name: chart.Name, URL: chart.RepoURL}
+		if err := helm.AddRepository(ctx, repo); err != nil {
+			return fmt.Errorf("adding helm repository %s: %w", repo.Name, err)
+		}
+
+		// Update dependencies
+		dep := helm.DependencyOptions{ChartPath: chart.Path, Timeout: opts.Timeout}
+		if err := helm.UpdateDependencies(ctx, dep); err != nil {
+			return fmt.Errorf("updating dependencies for %s: %w", chart.Name, err)
+		}
+
+		// Template and apply
+		manifest, err := helm.Template(ctx, helm.TemplateOptions{
+			ReleaseName: chart.Name,
+			ChartPath:   chart.Path,
+			Namespace:   chart.Namespace,
+			ValuesPaths: chart.OverlayValues,
+		})
+		if err != nil {
+			return fmt.Errorf("templating %s: %w", chart.Name, err)
+		}
+
+		if opts.DryRun {
+			log.Info().Msgf("[DRY-RUN] Would apply %s manifest", chart.Name)
+			continue
+		}
+
+		applyOpts := k8s.DefaultApplyOptions()
+		applyOpts.FieldManager = "kubarax-bootstrap-" + chart.Name
+		applyOpts.ForceConflicts = true
+
+		if err := client.ApplyManifest(ctx, manifest, applyOpts); err != nil {
+			return fmt.Errorf("applying %s manifest: %w", chart.Name, err)
+		}
+
+		log.Info().Msgf("Installed %s successfully", chart.Name)
+	}
+
+	return nil
+}
+
+func buildAdditionalCharts(opts *Options) []BootstrapChart {
+	return []BootstrapChart{
 		{
 			Name:            "external-secrets",
 			Namespace:       externalSecretsNamespace,
@@ -146,60 +379,6 @@ func buildBootstrapCharts(opts *Options) []BootstrapChart {
 			EnsureCRD:       opts.WithProm,
 		},
 	}
-	return charts
-}
-
-func ensureNamespaces(ctx context.Context, client *k8s.Client, opts *Options, charts []BootstrapChart) error {
-	log.Info().Msg("Ensuring namespaces exist")
-	for _, chart := range charts {
-		if chart.EnsureNamespace {
-			if err := client.EnsureNamespace(ctx, chart.Namespace, opts.DryRun); err != nil {
-				return fmt.Errorf("ensuring %s namespace: %w", chart.Name, err)
-			}
-		}
-	}
-	return nil
-}
-
-func addHelmRepositories(ctx context.Context, charts []BootstrapChart) error {
-	log.Info().Msg("Adding helm repositories")
-	for _, chart := range charts {
-		if chart.EnsureCRD {
-			repo := helm.RepoOptions{Name: chart.Name, URL: chart.RepoURL}
-			if err := helm.AddRepository(ctx, repo); err != nil {
-				return fmt.Errorf("adding helm repository %s: %w", repo.Name, err)
-			}
-			log.Info().Msgf("Added helm repository: %s", repo.Name)
-		}
-	}
-	return nil
-}
-
-func updateHelmDependencies(ctx context.Context, opts *Options, charts []BootstrapChart) error {
-	log.Info().Msg("Updating helm chart dependencies")
-	for _, chart := range charts {
-		if chart.EnsureCRD {
-			dep := helm.DependencyOptions{ChartPath: chart.Path, Timeout: opts.Timeout}
-			if err := helm.UpdateDependencies(ctx, dep); err != nil {
-				return fmt.Errorf("updating helm dependencies for %s: %w", chart.Name, err)
-			}
-			log.Info().Msgf("Updated helm dependencies for: %s", chart.Name)
-		}
-	}
-	return nil
-}
-
-func applyCRDs(ctx context.Context, client *k8s.Client, opts *Options, charts []BootstrapChart) error {
-	log.Info().Msg("Applying CRDs")
-	// CRD application is handled via helm template + server-side apply
-	// Each chart that needs CRDs will have them applied during the helm install
-	for _, chart := range charts {
-		if !chart.EnsureCRD {
-			continue
-		}
-		log.Info().Msgf("CRDs for %s will be applied during chart installation", chart.Name)
-	}
-	return nil
 }
 
 func applySecrets(ctx context.Context, client *k8s.Client, opts *Options) error {
@@ -223,192 +402,59 @@ func applySecrets(ctx context.Context, client *k8s.Client, opts *Options) error 
 	return nil
 }
 
-func bootstrapFluxCD(ctx context.Context, client *k8s.Client, opts *Options, charts []BootstrapChart) error {
-	log.Info().Msg("Bootstrapping FluxCD")
-
-	// Find the flux chart
-	var fluxChart BootstrapChart
-	for _, c := range charts {
-		if c.Name == "flux2" {
-			fluxChart = c
-			break
-		}
-	}
-
-	// Template and apply FluxCD
-	manifest, err := helm.Template(ctx, helm.TemplateOptions{
-		ReleaseName: fluxChart.Name,
-		ChartPath:   fluxChart.Path,
-		Namespace:   fluxChart.Namespace,
-		ValuesPaths: fluxChart.OverlayValues,
-	})
-	if err != nil {
-		return fmt.Errorf("templating FluxCD: %w", err)
-	}
-
-	if opts.DryRun {
-		log.Info().Msg("[DRY-RUN] Would apply FluxCD manifest")
-		return nil
-	}
-
-	applyOpts := k8s.DefaultApplyOptions()
-	applyOpts.FieldManager = "kubarax-flux-bootstrap"
-	applyOpts.ForceConflicts = true
-
-	if err := client.ApplyManifest(ctx, manifest, applyOpts); err != nil {
-		return fmt.Errorf("applying FluxCD manifest: %w", err)
-	}
-
-	log.Info().Msg("FluxCD manifest applied successfully")
-	return nil
-}
-
-func waitForFluxCD(ctx context.Context, client *k8s.Client, opts *Options) error {
-	if opts.DryRun {
-		log.Info().Msg("[DRY-RUN] Skipping wait for FluxCD readiness")
-		return nil
-	}
-
-	log.Info().Msg("Waiting for FluxCD components to be ready")
-
-	// Wait for source-controller
-	if err := client.WaitForDeployment(ctx, fluxNamespace, "source-controller"); err != nil {
-		return fmt.Errorf("waiting for source-controller: %w", err)
-	}
-
-	// Wait for kustomize-controller
-	if err := client.WaitForDeployment(ctx, fluxNamespace, "kustomize-controller"); err != nil {
-		return fmt.Errorf("waiting for kustomize-controller: %w", err)
-	}
-
-	// Wait for helm-controller
-	if err := client.WaitForDeployment(ctx, fluxNamespace, "helm-controller"); err != nil {
-		return fmt.Errorf("waiting for helm-controller: %w", err)
-	}
-
-	// Wait for notification-controller
-	if err := client.WaitForDeployment(ctx, fluxNamespace, "notification-controller"); err != nil {
-		return fmt.Errorf("waiting for notification-controller: %w", err)
-	}
-
-	log.Info().Msg("FluxCD components are ready")
-	return nil
-}
-
-func applyFluxSources(ctx context.Context, client *k8s.Client, opts *Options) error {
-	if opts.DryRun {
-		log.Info().Msg("[DRY-RUN] Would apply Flux GitRepository and Kustomization sources")
-		return nil
-	}
-
-	log.Info().Msg("Applying FluxCD GitRepository and Kustomization sources")
-
-	// Create the GitRepository source pointing to the platform repo
-	gitRepoManifest := buildGitRepositoryManifest(opts)
-	applyOpts := k8s.DefaultApplyOptions()
-	applyOpts.FieldManager = "kubarax-flux-bootstrap"
-
-	if err := client.ApplyManifest(ctx, []byte(gitRepoManifest), applyOpts); err != nil {
-		return fmt.Errorf("applying GitRepository: %w", err)
-	}
-
-	// Create the root Kustomization that points to the cluster's managed catalog
-	kustomizationManifest := buildRootKustomizationManifest(opts)
-	if err := client.ApplyManifest(ctx, []byte(kustomizationManifest), applyOpts); err != nil {
-		return fmt.Errorf("applying root Kustomization: %w", err)
-	}
-
-	log.Info().Msg("FluxCD sources applied successfully")
-	return nil
-}
-
-func buildGitRepositoryManifest(opts *Options) string {
-	interval := "5m"
-	if opts.ClusterConfig.FluxCD.Interval != "" {
-		interval = opts.ClusterConfig.FluxCD.Interval
-	}
-	branch := "main"
-	if opts.ClusterConfig.FluxCD.GitRepository.Branch != "" {
-		branch = opts.ClusterConfig.FluxCD.GitRepository.Branch
-	}
-
-	return fmt.Sprintf(`apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: platform
-  namespace: flux-system
-spec:
-  interval: %s
-  url: %s
-  ref:
-    branch: %s
-  secretRef:
-    name: flux-git-credentials
-`, interval, opts.ClusterConfig.FluxCD.GitRepository.URL, branch)
-}
-
-func buildRootKustomizationManifest(opts *Options) string {
-	return fmt.Sprintf(`apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: platform
-  namespace: flux-system
-spec:
-  interval: 10m
-  sourceRef:
-    kind: GitRepository
-    name: platform
-  path: ./managed-service-catalog/helm/%s
-  prune: true
-  wait: true
-  timeout: 5m
-`, opts.ClusterName)
-}
-
 // CompletionLogConfig contains the data for the completion message
 type CompletionLogConfig struct {
-	WeaveGitopsPassword string
-	ClusterDNSName      string
+	ClusterDNSName string
+	WebUIEnabled   bool
 }
 
 func printCompletionMessage(opts *Options) {
 	if opts.DryRun {
-		log.Info().Msg("[DRY-RUN] FluxCD bootstrap completed successfully")
+		log.Info().Msg("[DRY-RUN] Flux Operator bootstrap completed successfully")
 		return
 	}
 
-	config := CompletionLogConfig{}
-	if opts.ClusterConfig != nil {
-		config.ClusterDNSName = opts.ClusterConfig.DNSName
+	cfg := CompletionLogConfig{
+		WebUIEnabled: opts.ClusterConfig.FluxCD.WebUI.Enabled,
 	}
-	config.WeaveGitopsPassword = opts.EnvMap.WeaveGitopsPassword
+	if opts.ClusterConfig != nil {
+		cfg.ClusterDNSName = opts.ClusterConfig.DNSName
+	}
 
-	log.Info().Msg(CreateCompletionMessage(config))
+	log.Info().Msg(CreateCompletionMessage(cfg))
 }
 
 // CreateCompletionMessage returns the formatted completion message
-func CreateCompletionMessage(config CompletionLogConfig) string {
-	formattedOutput := ""
-	if config.ClusterDNSName != "" {
-		formattedOutput = fmt.Sprintf(" or try: https://%s/gitops (if ingress is running)", config.ClusterDNSName)
+func CreateCompletionMessage(cfg CompletionLogConfig) string {
+	webUIMsg := ""
+	if cfg.WebUIEnabled {
+		webUIMsg = `
+
+To access the Flux Operator Web UI:
+
+    kubectl port-forward svc/flux-operator -n flux-system 9080:9080 --kubeconfig ...
+
+Then open: http://localhost:9080`
+	}
+
+	ingressMsg := ""
+	if cfg.ClusterDNSName != "" {
+		ingressMsg = fmt.Sprintf(" or try: https://%s/flux (if ingress is configured)", cfg.ClusterDNSName)
 	}
 
 	return fmt.Sprintf(`
-FluxCD bootstrap complete!
+Flux Operator bootstrap complete!
 
-FluxCD is now managing your cluster. You can check reconciliation status with:
+The Flux Operator is managing your cluster via the FluxInstance CR.
+Check reconciliation status with:
 
-    flux get all -A
-
-To access the Weave GitOps UI:
-
-    kubectl port-forward svc/weave-gitops -n flux-system 9001:9001 --kubeconfig ...
-
-Then open: http://localhost:9001%s
+    kubectl get fluxinstance -n flux-system
+    kubectl get kustomizations -A
+    kubectl get helmreleases -A%s%s
 
 Next steps:
 1. Commit and push your generated manifests to the Git repository
-2. FluxCD will automatically reconcile and deploy all platform components
-3. Monitor progress with: flux get kustomizations -A
-4. Check HelmRelease status: flux get helmreleases -A`, formattedOutput)
+2. The FluxInstance will automatically reconcile from your configured sync path
+3. All platform components will be deployed via HelmReleases
+4. Use ResourceSets for multi-cluster deployment patterns`, webUIMsg, ingressMsg)
 }

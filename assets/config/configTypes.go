@@ -35,19 +35,42 @@ type DNS struct {
 	AdminEmail string `yaml:"adminEmail" json:"adminEmail" jsonschema:"required,description=Admin email for DNS"`
 }
 
-// FluxConfig holds FluxCD-specific configuration
+// FluxConfig holds FluxCD Operator-specific configuration
 type FluxConfig struct {
-	GitRepository    GitRepoConfig    `yaml:"gitRepository" json:"gitRepository" jsonschema:"required,description=Git repository for FluxCD sources"`
+	Distribution     FluxDistribution `yaml:"distribution" json:"distribution" jsonschema:"required,description=Flux distribution configuration"`
+	Cluster          FluxCluster      `yaml:"cluster,omitempty" json:"cluster,omitempty" jsonschema:"description=Cluster profile configuration"`
+	Sync             FluxSync         `yaml:"sync" json:"sync" jsonschema:"required,description=Flux sync configuration (GitRepository + Kustomization)"`
 	HelmRepositories []HelmRepoConfig `yaml:"helmRepositories,omitempty" json:"helmRepositories,omitempty" jsonschema:"description=Additional Helm repositories"`
-	Interval         string           `yaml:"interval,omitempty" json:"interval,omitempty" jsonschema:"description=Default reconciliation interval (e.g. 5m)"`
+	WebUI            FluxWebUI        `yaml:"webUI,omitempty" json:"webUI,omitempty" jsonschema:"description=Flux Operator Web UI configuration"`
 }
 
-// GitRepoConfig holds Git repository configuration for FluxCD
-type GitRepoConfig struct {
-	URL            string `yaml:"url" json:"url" jsonschema:"required,description=Git repository URL"`
-	Branch         string `yaml:"branch,omitempty" json:"branch,omitempty" jsonschema:"description=Git branch to track"`
-	TargetRevision string `yaml:"targetRevision,omitempty" json:"targetRevision,omitempty" jsonschema:"description=Target revision (tag/commit)"`
-	SecretRef      string `yaml:"secretRef,omitempty" json:"secretRef,omitempty" jsonschema:"description=Name of secret containing Git credentials"`
+// FluxDistribution configures the Flux distribution installed by the operator
+type FluxDistribution struct {
+	Version  string `yaml:"version,omitempty" json:"version,omitempty" jsonschema:"description=Flux version semver range (e.g. 2.x)"`
+	Registry string `yaml:"registry,omitempty" json:"registry,omitempty" jsonschema:"description=Container registry for Flux images"`
+}
+
+// FluxCluster configures cluster-specific Flux Operator settings
+type FluxCluster struct {
+	Type          string `yaml:"type,omitempty" json:"type,omitempty" jsonschema:"enum=kubernetes,enum=openshift,enum=azure,enum=aws,enum=gcp,description=Cluster type"`
+	Size          string `yaml:"size,omitempty" json:"size,omitempty" jsonschema:"enum=small,enum=medium,enum=large,description=Resource profile size"`
+	Multitenant   bool   `yaml:"multitenant,omitempty" json:"multitenant,omitempty" jsonschema:"description=Enable multi-tenancy lockdown"`
+	NetworkPolicy bool   `yaml:"networkPolicy,omitempty" json:"networkPolicy,omitempty" jsonschema:"description=Enable network policies"`
+}
+
+// FluxSync configures the FluxInstance sync spec (Git/OCI source + path)
+type FluxSync struct {
+	Kind       string `yaml:"kind,omitempty" json:"kind,omitempty" jsonschema:"enum=GitRepository,enum=OCIRepository,enum=Bucket,description=Source kind"`
+	URL        string `yaml:"url" json:"url" jsonschema:"required,description=Source URL (Git HTTPS or OCI)"`
+	Ref        string `yaml:"ref,omitempty" json:"ref,omitempty" jsonschema:"description=Git ref (e.g. refs/heads/main)"`
+	Path       string `yaml:"path,omitempty" json:"path,omitempty" jsonschema:"description=Path within the source to reconcile"`
+	PullSecret string `yaml:"pullSecret,omitempty" json:"pullSecret,omitempty" jsonschema:"description=Name of secret containing source credentials"`
+	Interval   string `yaml:"interval,omitempty" json:"interval,omitempty" jsonschema:"description=Reconciliation interval (e.g. 5m)"`
+}
+
+// FluxWebUI configures the Flux Operator built-in web dashboard
+type FluxWebUI struct {
+	Enabled bool `yaml:"enabled,omitempty" json:"enabled,omitempty" jsonschema:"description=Enable the Flux Operator Web UI"`
 }
 
 // HelmRepoConfig holds Helm repository configuration
@@ -73,7 +96,7 @@ type Services struct {
 	OAuth2Proxy           GenericService     `yaml:"oauth2Proxy" json:"oauth2Proxy" jsonschema:"description=OAuth2 Proxy"`
 	Longhorn              GenericService     `yaml:"longhorn" json:"longhorn" jsonschema:"description=Longhorn storage"`
 	MetalLB               GenericService     `yaml:"metallb" json:"metallb" jsonschema:"description=MetalLB load balancer"`
-	WeaveGitops           GenericService     `yaml:"weaveGitops" json:"weaveGitops" jsonschema:"description=Weave GitOps UI (FluxCD dashboard)"`
+	FluxWebUI             GenericService     `yaml:"fluxWebUI" json:"fluxWebUI" jsonschema:"description=Flux Operator Web UI dashboard"`
 	HomeDashboard         GenericService     `yaml:"homeDashboard" json:"homeDashboard" jsonschema:"description=Home dashboard"`
 	Forgejo               GenericService     `yaml:"forgejo" json:"forgejo" jsonschema:"description=Forgejo Git service"`
 }
