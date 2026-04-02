@@ -11,9 +11,9 @@ type EnvMap struct {
 	// Docker registry credentials
 	DockerconfigBase64 string `env:"DOCKERCONFIG_BASE64" default:"<...>" yaml:"DOCKERCONFIG_BASE64"`
 
-	// Git repository credentials (for FluxCD GitRepository source)
-	FluxGitHTTPSUrl    string `env:"FLUX_GIT_HTTPS_URL" default:"<...>" yaml:"FLUX_GIT_HTTPS_URL"`
-	FluxGitUsername    string `env:"FLUX_GIT_USERNAME" default:"<...>" yaml:"FLUX_GIT_USERNAME"`
+	// Git repository credentials (for Flux Operator sync)
+	FluxGitHTTPSUrl      string `env:"FLUX_GIT_HTTPS_URL" default:"<...>" yaml:"FLUX_GIT_HTTPS_URL"`
+	FluxGitUsername      string `env:"FLUX_GIT_USERNAME" default:"<...>" yaml:"FLUX_GIT_USERNAME"`
 	FluxGitPatOrPassword string `env:"FLUX_GIT_PAT_OR_PASSWORD" default:"<...>" yaml:"FLUX_GIT_PAT_OR_PASSWORD"`
 
 	// DNS
@@ -23,9 +23,6 @@ type EnvMap struct {
 	HelmRepoUsername string `env:"HELM_REPO_USERNAME" default:"" yaml:"HELM_REPO_USERNAME"`
 	HelmRepoPassword string `env:"HELM_REPO_PASSWORD" default:"" yaml:"HELM_REPO_PASSWORD"`
 	HelmRepoURL      string `env:"HELM_REPO_URL" default:"" yaml:"HELM_REPO_URL"`
-
-	// Weave GitOps UI password (replaces ArgoCD wizard password)
-	WeaveGitopsPassword string `env:"WEAVE_GITOPS_PASSWORD" default:"<...>" yaml:"WEAVE_GITOPS_PASSWORD"`
 }
 
 // ErrorEnvMap is a custom error type for environment validation
@@ -48,13 +45,12 @@ func (e *ErrorEnvMap) Unwrap() error {
 // Validate checks that all required fields are configured
 func (em *EnvMap) Validate() error {
 	required := map[string]string{
-		"PROJECT_NAME":           em.ProjectName,
-		"PROJECT_STAGE":          em.ProjectStage,
-		"FLUX_GIT_HTTPS_URL":     em.FluxGitHTTPSUrl,
-		"FLUX_GIT_USERNAME":      em.FluxGitUsername,
+		"PROJECT_NAME":             em.ProjectName,
+		"PROJECT_STAGE":            em.ProjectStage,
+		"FLUX_GIT_HTTPS_URL":       em.FluxGitHTTPSUrl,
+		"FLUX_GIT_USERNAME":        em.FluxGitUsername,
 		"FLUX_GIT_PAT_OR_PASSWORD": em.FluxGitPatOrPassword,
-		"DOMAIN_NAME":            em.DomainName,
-		"WEAVE_GITOPS_PASSWORD":  em.WeaveGitopsPassword,
+		"DOMAIN_NAME":              em.DomainName,
 	}
 
 	for name, value := range required {
@@ -101,9 +97,6 @@ func (em *EnvMap) SetDefaults() {
 	if em.DomainName == "" {
 		em.DomainName = "<...>"
 	}
-	if em.WeaveGitopsPassword == "" {
-		em.WeaveGitopsPassword = "<...>"
-	}
 }
 
 // GenerateEnvExample generates an example .env file content
@@ -118,16 +111,13 @@ KUBARAX_PROJECT_STAGE=<...>
 # Docker registry credentials (base64 encoded dockerconfig)
 KUBARAX_DOCKERCONFIG_BASE64=<...>
 
-# Git repository for FluxCD (HTTPS)
+# Git repository for Flux Operator sync (HTTPS)
 KUBARAX_FLUX_GIT_HTTPS_URL=<...>
 KUBARAX_FLUX_GIT_USERNAME=<...>
 KUBARAX_FLUX_GIT_PAT_OR_PASSWORD=<...>
 
 # DNS domain
 KUBARAX_DOMAIN_NAME=<...>
-
-# Weave GitOps UI password
-KUBARAX_WEAVE_GITOPS_PASSWORD=<...>
 
 # Optional: Helm OCI repository credentials
 # KUBARAX_HELM_REPO_USERNAME=

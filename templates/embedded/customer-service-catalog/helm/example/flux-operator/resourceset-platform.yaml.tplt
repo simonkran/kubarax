@@ -1,0 +1,34 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: platform-services
+  namespace: flux-system
+spec:
+  # Static inputs for this cluster's services
+  inputs:
+    - id: << inputs.id >>
+      cluster: {{ .name }}
+      stage: {{ .stage }}
+      dnsName: {{ .dnsName }}
+  resourcesTemplate: |
+    ---
+    apiVersion: kustomize.toolkit.fluxcd.io/v1
+    kind: Kustomization
+    metadata:
+      name: platform-<< inputs.cluster >>
+      namespace: flux-system
+    spec:
+      interval: 10m
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+      path: "./customer-service-catalog/helm/<< inputs.cluster >>"
+      prune: true
+      wait: true
+      timeout: 10m
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true

@@ -205,10 +205,9 @@ func (o *GenerateOptions) processClusters() ([]templates.TemplateResult, []strin
 
 		// Add env map to context
 		data["env"] = map[string]interface{}{
-			"fluxGitHTTPSUrl":     em.GetConfig().FluxGitHTTPSUrl,
-			"fluxGitUsername":     em.GetConfig().FluxGitUsername,
-			"domainName":          em.GetConfig().DomainName,
-			"weaveGitopsPassword": em.GetConfig().WeaveGitopsPassword,
+			"fluxGitHTTPSUrl": em.GetConfig().FluxGitHTTPSUrl,
+			"fluxGitUsername": em.GetConfig().FluxGitUsername,
+			"domainName":      em.GetConfig().DomainName,
 		}
 
 		// Generate templates

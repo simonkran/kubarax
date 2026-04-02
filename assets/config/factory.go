@@ -12,11 +12,25 @@ func NewClusterFromEnv(env *envmap.EnvMap) Cluster {
 		Type:    "controlplane",
 		DNSName: env.DomainName,
 		FluxCD: FluxConfig{
-			GitRepository: GitRepoConfig{
-				URL:    env.FluxGitHTTPSUrl,
-				Branch: "main",
+			Distribution: FluxDistribution{
+				Version:  "2.x",
+				Registry: "ghcr.io/fluxcd",
 			},
-			Interval: "5m",
+			Cluster: FluxCluster{
+				Type:          "kubernetes",
+				Size:          "medium",
+				NetworkPolicy: true,
+			},
+			Sync: FluxSync{
+				Kind:     "GitRepository",
+				URL:      env.FluxGitHTTPSUrl,
+				Ref:      "refs/heads/main",
+				Path:     "clusters/" + env.ProjectName,
+				Interval: "5m",
+			},
+			WebUI: FluxWebUI{
+				Enabled: true,
+			},
 		},
 		Services: DefaultServices(),
 	}
@@ -38,7 +52,7 @@ func DefaultServices() Services {
 		OAuth2Proxy:         GenericService{Status: ServiceDisabled},
 		Longhorn:            GenericService{Status: ServiceDisabled},
 		MetalLB:             GenericService{Status: ServiceDisabled},
-		WeaveGitops:         GenericService{Status: ServiceEnabled},
+		FluxWebUI:           GenericService{Status: ServiceEnabled},
 		HomeDashboard:       GenericService{Status: ServiceEnabled},
 		Forgejo:             GenericService{Status: ServiceDisabled},
 	}
@@ -63,6 +77,6 @@ func CreateOrUpdateClusterFromEnv(cfg *Config, env *envmap.EnvMap) {
 		c.DNSName = env.DomainName
 	}
 	if env.FluxGitHTTPSUrl != "" && env.FluxGitHTTPSUrl != "<...>" {
-		c.FluxCD.GitRepository.URL = env.FluxGitHTTPSUrl
+		c.FluxCD.Sync.URL = env.FluxGitHTTPSUrl
 	}
 }

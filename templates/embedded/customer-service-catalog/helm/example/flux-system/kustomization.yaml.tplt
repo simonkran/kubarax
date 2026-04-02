@@ -1,15 +1,19 @@
+# The FluxInstance CR's sync spec automatically creates a GitRepository
+# and root Kustomization pointing to {{ .fluxcd.sync.path | default (printf "clusters/%s" .name) }}.
+# This Kustomization reconciles the platform HelmReleases for this cluster.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: platform
+  name: platform-helmreleases
   namespace: flux-system
 spec:
-  interval: {{ .fluxcd.interval | default "5m" }}
+  interval: {{ .fluxcd.sync.interval | default "5m" }}
   sourceRef:
     kind: GitRepository
-    name: platform
-  path: ./clusters/{{ .name }}
+    name: flux-system
+  path: ./customer-service-catalog/helm/{{ .name }}
   prune: true
   wait: true
   timeout: 10m
-  healthChecks: []
+  dependsOn:
+    - name: flux-system

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: flux-operator
+description: Flux Operator - Kubernetes GitOps lifecycle manager
+version: 0.1.0
+type: application
+dependencies:
+  - name: flux-operator
+    version: "*"
+    repository: "oci://ghcr.io/controlplaneio-fluxcd/charts"

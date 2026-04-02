@@ -1,0 +1,29 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+spec:
+  distribution:
+    version: "{{ .fluxcd.distribution.version | default "2.x" }}"
+    registry: "{{ .fluxcd.distribution.registry | default "ghcr.io/fluxcd" }}"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: {{ .fluxcd.cluster.type | default "kubernetes" }}
+    size: {{ .fluxcd.cluster.size | default "medium" }}
+    multitenant: {{ .fluxcd.cluster.multitenant | default false }}
+    networkPolicy: {{ .fluxcd.cluster.networkPolicy | default true }}
+  sync:
+    kind: {{ .fluxcd.sync.kind | default "GitRepository" }}
+    url: "{{ .fluxcd.sync.url }}"
+    ref: "{{ .fluxcd.sync.ref | default "refs/heads/main" }}"
+    path: "{{ .fluxcd.sync.path | default (printf "clusters/%s" .name) }}"
+    interval: "{{ .fluxcd.sync.interval | default "5m" }}"
+    pullSecret: "{{ .fluxcd.sync.pullSecret | default "flux-git-credentials" }}"
