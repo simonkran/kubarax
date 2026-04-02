@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"kubarax/cmd"
@@ -57,9 +57,7 @@ func main() {
 			cmd.NewSchemaCmd(),
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			fmt.Println("kubarax - Kubernetes Platform Engineering with FluxCD")
-			fmt.Println("Run 'kubarax --help' for usage information")
-			return nil
+			return cli.ShowAppHelp(c)
 		},
 	}
 
@@ -73,5 +71,5 @@ func defaultKubeconfig() string {
 	if err != nil {
 		return ""
 	}
-	return home + "/.kube/config"
+	return filepath.Join(home, ".kube", "config")
 }
