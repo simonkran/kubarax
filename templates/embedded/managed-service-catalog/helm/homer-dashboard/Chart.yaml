@@ -1,0 +1,9 @@
+apiVersion: v2
+name: homer-dashboard
+description: Homer - A dead simple static HOMEpage for your servER
+version: 0.1.0
+type: application
+dependencies:
+  - name: homer
+    version: "8.x"
+    repository: "https://djjudas21.github.io/charts"

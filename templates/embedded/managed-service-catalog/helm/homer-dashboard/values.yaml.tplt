@@ -1,0 +1,35 @@
+homer:
+  ingress:
+    main:
+      enabled: true
+      ingressClassName: {{ .ingressClassName | default "traefik" }}
+      hosts:
+        - host: home.{{ .dnsName }}
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: homer-dashboard-tls
+          hosts:
+            - home.{{ .dnsName }}
+  configmap:
+    config:
+      data:
+        config.yml: |
+          title: "{{ .name }} Platform Dashboard"
+          subtitle: "{{ .stage }}"
+          header: true
+          footer: false
+          columns: "3"
+          connectivityCheck: true
+          services:
+            - name: "Platform"
+              items:
+                - name: "Grafana"
+                  subtitle: "Monitoring & Dashboards"
+                  url: "https://grafana.{{ .dnsName }}"
+                  icon: "fas fa-chart-area"
+                - name: "GitOps"
+                  subtitle: "FluxCD Dashboard"
+                  url: "https://gitops.{{ .dnsName }}"
+                  icon: "fas fa-code-branch"

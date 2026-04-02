@@ -1,0 +1,21 @@
+kyverno:
+  admissionController:
+    replicas: 1
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+  backgroundController:
+    enabled: true
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+  cleanupController:
+    enabled: true
+  reportsController:
+    enabled: true
+  config:
+    webhooks:
+      - objectSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/managed-by
+              operator: NotIn
+              values:
+                - Helm

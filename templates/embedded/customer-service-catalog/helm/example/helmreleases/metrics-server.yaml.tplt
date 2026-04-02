@@ -1,0 +1,24 @@
+{{- if eq (index .services "metricsServer").status "enabled" }}
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: metrics-server
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./managed-service-catalog/helm/metrics-server
+      sourceRef:
+        kind: GitRepository
+        name: platform
+      interval: 5m
+  targetNamespace: kube-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values: {}
+{{- end }}

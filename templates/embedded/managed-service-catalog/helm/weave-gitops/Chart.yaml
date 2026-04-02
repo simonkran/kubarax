@@ -1,0 +1,9 @@
+apiVersion: v2
+name: weave-gitops
+description: Weave GitOps - FluxCD dashboard UI
+version: 0.1.0
+type: application
+dependencies:
+  - name: weave-gitops
+    version: "4.x"
+    repository: "https://helm.gitops.weave.works"

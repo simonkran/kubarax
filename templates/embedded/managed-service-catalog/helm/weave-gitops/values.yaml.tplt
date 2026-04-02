@@ -1,0 +1,18 @@
+weave-gitops:
+  adminUser:
+    create: true
+    username: admin
+  ingress:
+    enabled: true
+    className: {{ .ingressClassName | default "traefik" }}
+    hosts:
+      - host: gitops.{{ .dnsName }}
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: weave-gitops-tls
+        hosts:
+          - gitops.{{ .dnsName }}
+  metrics:
+    enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}

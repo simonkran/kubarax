@@ -1,0 +1,28 @@
+{{- if eq (index .services "oauth2Proxy").status "enabled" }}
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: oauth2-proxy
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./managed-service-catalog/helm/oauth2-proxy
+      sourceRef:
+        kind: GitRepository
+        name: platform
+      interval: 5m
+  targetNamespace: oauth2-proxy
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: cert-manager
+    - name: traefik
+  values: {}
+{{- end }}

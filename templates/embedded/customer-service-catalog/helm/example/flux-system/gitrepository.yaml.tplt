@@ -1,0 +1,18 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform
+  namespace: flux-system
+spec:
+  interval: {{ .fluxcd.interval | default "5m" }}
+  url: {{ .fluxcd.gitRepository.url }}
+  ref:
+    {{- if .fluxcd.gitRepository.targetRevision }}
+    tag: {{ .fluxcd.gitRepository.targetRevision }}
+    {{- else }}
+    branch: {{ .fluxcd.gitRepository.branch | default "main" }}
+    {{- end }}
+  {{- if .fluxcd.gitRepository.secretRef }}
+  secretRef:
+    name: {{ .fluxcd.gitRepository.secretRef }}
+  {{- end }}

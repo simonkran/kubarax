@@ -1,0 +1,18 @@
+{{- range .fluxcd.helmRepositories }}
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: {{ .name }}
+  namespace: flux-system
+spec:
+  interval: 60m
+  url: {{ .url }}
+  {{- if .type }}
+  type: {{ .type }}
+  {{- end }}
+  {{- if .secretRef }}
+  secretRef:
+    name: {{ .secretRef }}
+  {{- end }}
+{{- end }}
