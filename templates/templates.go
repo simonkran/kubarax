@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed embedded
@@ -111,6 +112,13 @@ func TemplateAllFiles(templateType TemplateType, data map[string]interface{}) ([
 // renderTemplate processes a single template string with sprig functions
 func renderTemplate(name, content string, data map[string]interface{}) (string, error) {
 	funcMap := sprig.TxtFuncMap()
+	funcMap["toYaml"] = func(v interface{}) string {
+		out, err := yaml.Marshal(v)
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSuffix(string(out), "\n")
+	}
 
 	tmpl, err := template.New(filepath.Base(name)).Funcs(funcMap).Parse(content)
 	if err != nil {
