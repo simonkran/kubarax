@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -39,11 +40,13 @@ func Template(ctx context.Context, opts TemplateOptions) ([]byte, error) {
 	}
 
 	cmd := exec.CommandContext(ctx, "helm", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("helm template: %s: %w", string(output), err)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("helm template: %s: %w", stderr.String(), err)
 	}
 
 	log.Debug().Msgf("Rendered helm template: %s", opts.ReleaseName)
-	return output, nil
+	return stdout.Bytes(), nil
 }
