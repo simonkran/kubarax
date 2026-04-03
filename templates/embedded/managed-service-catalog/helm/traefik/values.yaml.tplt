@@ -1,7 +1,4 @@
 traefik:
-  ingressClass:
-    enabled: true
-    isDefaultClass: true
   resources:
     requests:
       cpu: 250m
@@ -43,30 +40,6 @@ traefik:
             - X-Auth-Request-Email
             - Authorization
   {{- end }}
-  service:
-    type: LoadBalancer
-    {{- if .publicLoadBalancerIP }}
-    spec:
-      loadBalancerIP: {{ .publicLoadBalancerIP }}
-    {{- end }}
-  ports:
-    web:
-      redirectTo:
-        port: websecure
-    websecure:
-      tls:
-        enabled: true
-  providers:
-    kubernetesIngress:
-      publishedService:
-        enabled: true
-    kubernetesCRD:
-      enabled: true
-  logs:
-    general:
-      level: INFO
-    access:
-      enabled: true
   metrics:
     prometheus:
       entryPoint: metrics
