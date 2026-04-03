@@ -56,6 +56,8 @@ func NewBootstrapCmd() *cli.Command {
 				Name:        "cluster-name",
 				UsageText:   "The name of the cluster as set in the config",
 				Destination: &clusterNameArg,
+				Min:         1,
+				Max:         1,
 			},
 		},
 		Action: func(c context.Context, cmd *cli.Command) error {
