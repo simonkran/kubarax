@@ -33,3 +33,9 @@ homer:
                   subtitle: "FluxCD Dashboard"
                   url: "https://gitops.{{ .dnsName }}"
                   icon: "fas fa-code-branch"
+                {{- if eq (index .services "oauth2Proxy").status "enabled" }}
+                - name: "Traefik"
+                  subtitle: "Ingress Controller Dashboard"
+                  url: "https://{{ .dnsName }}/traefik"
+                  icon: "fas fa-network-wired"
+                {{- end }}
