@@ -7,23 +7,49 @@ resources:
   - flux-operator/resourceset-worker-clusters.yaml
   # Flux sources
   - flux-system/kustomization.yaml
+{{- if .fluxcd.helmRepositories }}
   - flux-system/helmrepositories.yaml
+{{- end }}
 {{- if .fluxcd.gitRepositories }}
   - flux-system/gitrepositories.yaml
 {{- end }}
   # HelmReleases for platform services
+{{- if eq (index .services "certManager").status "enabled" }}
   - helmreleases/cert-manager.yaml
+{{- end }}
+{{- if eq (index .services "externalDns").status "enabled" }}
   - helmreleases/external-dns.yaml
+{{- end }}
+{{- if eq (index .services "externalSecrets").status "enabled" }}
   - helmreleases/external-secrets.yaml
+{{- end }}
+{{- if eq (index .services "kubePrometheusStack").status "enabled" }}
   - helmreleases/kube-prometheus-stack.yaml
+{{- end }}
+{{- if eq (index .services "loki").status "enabled" }}
   - helmreleases/loki.yaml
+{{- end }}
+{{- if eq (index .services "metricsServer").status "enabled" }}
   - helmreleases/metrics-server.yaml
+{{- end }}
+{{- if eq (index .services "traefik").status "enabled" }}
   - helmreleases/traefik.yaml
+{{- end }}
+{{- if eq (index .services "kyverno").status "enabled" }}
   - helmreleases/kyverno.yaml
+{{- end }}
+{{- if eq (index .services "oauth2Proxy").status "enabled" }}
   - helmreleases/oauth2-proxy.yaml
+{{- end }}
+{{- if eq (index .services "longhorn").status "enabled" }}
   - helmreleases/longhorn.yaml
+{{- end }}
+{{- if eq (index .services "metallb").status "enabled" }}
   - helmreleases/metallb.yaml
+{{- end }}
+{{- if eq (index .services "homeDashboard").status "enabled" }}
   - helmreleases/homer-dashboard.yaml
+{{- end }}
 {{- if .projects }}
   # Tenant projects
   - tenants/tenants.yaml
