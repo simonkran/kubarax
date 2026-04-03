@@ -1,0 +1,41 @@
+{{- $ci := (index .services "certManager").clusterIssuer }}
+{{- if $ci }}
+clusterIssuer:
+  name: {{ $ci.name }}
+  email: {{ $ci.email }}
+  server: {{ $ci.server }}
+  solver: {{ $ci.solver }}
+
+externalSecrets:
+{{- if eq $ci.solver "cloudflare" }}
+  cloudflare-api-token:
+    secretStoreRef:
+      name: {{ .name }}-{{ .stage }}
+      kind: ClusterSecretStore
+    target:
+      name: cloudflare-api-token
+    data:
+      - secretKey: apiKey
+        remoteRef:
+          key: cert-manager
+          property: cloudflare_api_token
+{{- else if eq $ci.solver "route53" }}
+  route53-credentials:
+    secretStoreRef:
+      name: {{ .name }}-{{ .stage }}
+      kind: ClusterSecretStore
+    target:
+      name: route53-credentials
+    data:
+      - secretKey: access-key-id
+        remoteRef:
+          key: cert-manager
+          property: access_key_id
+      - secretKey: secret-access-key
+        remoteRef:
+          key: cert-manager
+          property: secret_access_key
+{{- end }}
+{{- else }}
+externalSecrets: {}
+{{- end }}

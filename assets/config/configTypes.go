@@ -170,6 +170,7 @@ type ClusterIssuer struct {
 	Name   string `yaml:"name" json:"name" jsonschema:"description=ClusterIssuer name"`
 	Email  string `yaml:"email" json:"email" jsonschema:"description=ACME registration email"`
 	Server string `yaml:"server" json:"server" jsonschema:"description=ACME server URL"`
+	Solver string `yaml:"solver" json:"solver" jsonschema:"enum=cloudflare,enum=route53,description=DNS01 solver provider type"`
 }
 
 // Service status constants

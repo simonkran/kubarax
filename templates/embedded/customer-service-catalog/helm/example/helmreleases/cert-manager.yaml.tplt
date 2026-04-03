@@ -13,6 +13,9 @@ spec:
         kind: GitRepository
         name: flux-system
       interval: 5m
+      valuesFiles:
+        - ./managed-service-catalog/helm/cert-manager/values.yaml
+        - ./customer-service-catalog/helm/{{ .name }}/cert-manager/values.yaml
   targetNamespace: cert-manager
   install:
     createNamespace: true
@@ -21,5 +24,7 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  dependsOn:
+    - name: external-secrets
   values: {}
 {{- end }}
