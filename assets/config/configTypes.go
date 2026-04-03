@@ -19,6 +19,13 @@ type Cluster struct {
 	Terraform             *Terraform `yaml:"terraform,omitempty" json:"terraform,omitempty" jsonschema:"description=Terraform configuration"`
 	FluxCD                FluxConfig `yaml:"fluxcd" json:"fluxcd" jsonschema:"required,description=FluxCD configuration"`
 	Services              Services   `yaml:"services" json:"services" jsonschema:"required,description=Platform services configuration"`
+	Projects              []Project  `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
+}
+
+// Project represents a tenant project (namespace + RBAC)
+type Project struct {
+	Name        string `yaml:"name" json:"name" jsonschema:"required,description=Project/tenant name"`
+	ClusterRole string `yaml:"clusterRole,omitempty" json:"clusterRole,omitempty" jsonschema:"default=cluster-admin,description=ClusterRole to bind to the tenant ServiceAccount"`
 }
 
 // Terraform holds cloud infrastructure configuration

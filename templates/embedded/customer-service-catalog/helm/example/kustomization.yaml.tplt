@@ -21,3 +21,8 @@ resources:
   - helmreleases/longhorn.yaml
   - helmreleases/metallb.yaml
   - helmreleases/homer-dashboard.yaml
+{{- if .projects }}
+  # Tenant projects
+  - tenants/tenants.yaml
+  - tenants/kustomizations.yaml
+{{- end }}
