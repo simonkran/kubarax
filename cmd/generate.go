@@ -289,6 +289,12 @@ func (o *GenerateOptions) cleanupOldFiles(clusterNames []string) error {
 // writeTemplateResults writes generated template files to disk
 func (o *GenerateOptions) writeTemplateResults(results []templates.TemplateResult) error {
 	for _, result := range results {
+		// Skip files that rendered to empty/whitespace-only content
+		if len(strings.TrimSpace(string(result.Content))) == 0 {
+			log.Debug().Msgf("Skipped empty file: %s", result.Path)
+			continue
+		}
+
 		if o.dryRun {
 			log.Info().Msgf("[DRY-RUN] Would write: %s", result.Path)
 			continue
