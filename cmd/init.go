@@ -157,7 +157,11 @@ func (o *InitOptions) Run() error {
 			return fmt.Errorf("error validating env: %w", envValidateErr)
 		}
 
-		if fileExist, _ := utils.FileExist(cm.GetFilepath()); fileExist {
+		fileExist, err := utils.FileExist(cm.GetFilepath())
+		if err != nil {
+			return fmt.Errorf("checking config file: %w", err)
+		}
+		if fileExist {
 			app.CreateOrUpdateClusterFromEnv(cm.GetConfig(), em.GetConfig())
 		} else {
 			return fmt.Errorf("error loading config file: %s", cnfLoadErr)

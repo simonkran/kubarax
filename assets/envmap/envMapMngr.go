@@ -39,8 +39,9 @@ func (em *EnvMapManager) GetConfig() *EnvMap {
 func (em *EnvMapManager) Load() error {
 	// First try to load from .env file
 	if err := em.loadFromFile(); err != nil {
-		// File might not exist, that's ok - we'll try env vars
-		_ = err
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("loading env file: %w", err)
+		}
 	}
 
 	// Override with environment variables
