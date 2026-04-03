@@ -5,5 +5,5 @@ version: 0.1.0
 type: application
 dependencies:
   - name: oauth2-proxy
-    version: "7.12.x"
+    version: "10.4.x"
     repository: "https://oauth2-proxy.github.io/manifests"

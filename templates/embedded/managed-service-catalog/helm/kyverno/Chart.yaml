@@ -5,5 +5,5 @@ version: 0.1.0
 type: application
 dependencies:
   - name: kyverno
-    version: "3.3.x"
+    version: "3.7.x"
     repository: "https://kyverno.github.io/kyverno"

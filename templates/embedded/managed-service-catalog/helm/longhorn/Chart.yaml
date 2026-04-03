@@ -5,5 +5,5 @@ version: 0.1.0
 type: application
 dependencies:
   - name: longhorn
-    version: "1.7.x"
+    version: "1.11.x"
     repository: "https://charts.longhorn.io"
