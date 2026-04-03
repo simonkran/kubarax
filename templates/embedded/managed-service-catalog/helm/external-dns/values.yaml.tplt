@@ -1,3 +1,5 @@
+externalSecrets: {}
+
 external-dns:
   sources:
     - ingress
@@ -8,12 +10,34 @@ external-dns:
     - {{ .dnsName }}
   interval: "1m"
   logLevel: info
+  provider:
+    name: cloudflare
+  env:
+    - name: CF_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-api-token
+          key: apiKey
   resources:
     requests:
       cpu: 10m
       memory: 100Mi
     limits:
       memory: 100Mi
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    capabilities:
+      drop: ["ALL"]
   serviceMonitor:
     enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
     additionalLabels:

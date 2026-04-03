@@ -13,6 +13,9 @@ spec:
         kind: GitRepository
         name: flux-system
       interval: 5m
+      valuesFiles:
+        - ./managed-service-catalog/helm/external-dns/values.yaml
+        - ./customer-service-catalog/helm/{{ .name }}/external-dns/values.yaml
   targetNamespace: external-dns
   install:
     createNamespace: true
@@ -23,5 +26,6 @@ spec:
       retries: 3
   dependsOn:
     - name: cert-manager
+    - name: external-secrets
   values: {}
 {{- end }}

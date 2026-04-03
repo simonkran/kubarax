@@ -1,0 +1,12 @@
+externalSecrets:
+  cloudflare-api-token:
+    secretStoreRef:
+      name: {{ .name }}-{{ .stage }}
+      kind: ClusterSecretStore
+    target:
+      name: cloudflare-api-token
+    data:
+      - secretKey: apiKey
+        remoteRef:
+          key: cloudflare
+          property: api_token
