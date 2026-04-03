@@ -126,79 +126,28 @@ spec:
         property: kubeconfig
 ```
 
-## Step 4: Configure the Worker Cluster ResourceSet
+## Step 4: Register Worker in Controlplane Config
 
-Edit the generated `resourceset-worker-clusters.yaml` on the **control plane** to include the new worker:
-
-```yaml
-# customer-service-catalog/helm/controlplane-0/flux-operator/resourceset-worker-clusters.yaml
-apiVersion: fluxcd.controlplane.io/v1
-kind: ResourceSet
-metadata:
-  name: worker-clusters
-  namespace: flux-system
-spec:
-  inputs:
-    - id: worker-0
-      cluster: worker-0
-      kubeconfigSecret: worker-0-kubeconfig
-  resourcesTemplate: |
-    ---
-    apiVersion: kustomize.toolkit.fluxcd.io/v1
-    kind: Kustomization
-    metadata:
-      name: worker-<< inputs.id >>
-      namespace: flux-system
-    spec:
-      interval: 10m
-      sourceRef:
-        kind: GitRepository
-        name: flux-system
-      path: "./customer-service-catalog/helm/<< inputs.cluster >>"
-      prune: true
-      wait: true
-      timeout: 10m
-      kubeConfig:
-        secretRef:
-          name: << inputs.kubeconfigSecret >>
-  dependsOn:
-    - apiVersion: fluxcd.controlplane.io/v1
-      kind: FluxInstance
-      name: flux
-      namespace: flux-system
-      ready: true
-```
-
-The `kubeConfig.secretRef` tells FluxCD to deploy resources to the remote worker cluster.
-
-### Dynamic Discovery with ResourceSetInputProvider
-
-For fleet-scale deployments, use a `ResourceSetInputProvider` instead of static inputs:
+Add the worker cluster to the controlplane's `workerClusters` list in `config.yaml`:
 
 ```yaml
-apiVersion: fluxcd.controlplane.io/v1
-kind: ResourceSetInputProvider
-metadata:
-  name: worker-cluster-registry
-  namespace: flux-system
-spec:
-  type: ExternalService
-  url: https://cluster-registry.internal/api/clusters
-  filter:
-    labels: ["role=worker"]
-  defaultValues:
-    kubeconfigSecretPrefix: "kubeconfig-"
+clusters:
+  - name: controlplane-0
+    stage: prod
+    type: controlplane
+    # ... existing controlplane config ...
+    workerClusters:
+      - name: worker-0
+        kubeconfigSecret: worker-0-kubeconfig
 ```
 
-Then reference it from the ResourceSet:
+Then regenerate:
 
-```yaml
-spec:
-  inputsFrom:
-    - apiVersion: fluxcd.controlplane.io/v1
-      kind: ResourceSetInputProvider
-      name: worker-cluster-registry
+```bash
+kubarax generate --helm
 ```
+
+This automatically populates the `resourceset-worker-clusters.yaml` on the control plane with the correct inputs and `resourcesTemplate`. The `kubeConfig.secretRef` tells FluxCD to deploy resources to the remote worker cluster.
 
 ## Step 5: Commit and Push
 

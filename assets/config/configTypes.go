@@ -19,8 +19,15 @@ type Cluster struct {
 	Terraform             *Terraform `yaml:"terraform,omitempty" json:"terraform,omitempty" jsonschema:"description=Terraform configuration"`
 	FluxCD                FluxConfig `yaml:"fluxcd" json:"fluxcd" jsonschema:"required,description=FluxCD configuration"`
 	Services              Services   `yaml:"services" json:"services" jsonschema:"required,description=Platform services configuration"`
-	Projects              []Project      `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
-	Applications          []Application  `yaml:"applications,omitempty" json:"applications,omitempty" jsonschema:"description=Declarative application deployments for this cluster"`
+	Projects              []Project        `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
+	Applications          []Application    `yaml:"applications,omitempty" json:"applications,omitempty" jsonschema:"description=Declarative application deployments for this cluster"`
+	WorkerClusters        []WorkerCluster  `yaml:"workerClusters,omitempty" json:"workerClusters,omitempty" jsonschema:"description=Worker clusters managed by this controlplane"`
+}
+
+// WorkerCluster represents a worker cluster managed by a controlplane
+type WorkerCluster struct {
+	Name             string `yaml:"name" json:"name" jsonschema:"required,description=Worker cluster name"`
+	KubeconfigSecret string `yaml:"kubeconfigSecret" json:"kubeconfigSecret" jsonschema:"required,description=Name of the kubeconfig secret in flux-system namespace"`
 }
 
 // Project represents a tenant project (namespace + RBAC)

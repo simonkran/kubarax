@@ -1,16 +1,11 @@
 {{- if eq .type "controlplane" }}
 # ResourceSet for deploying platform components to worker clusters
-# This ResourceSet uses a ResourceSetInputProvider to dynamically discover
-# worker clusters and deploy the platform stack to each one.
+# This ResourceSet uses inputs from config.yaml workerClusters to deploy
+# the platform stack to each worker cluster.
 #
-# To add a worker cluster:
-# 1. Create a kubeconfig secret in flux-system namespace
-# 2. Create a ResourceSetInputProvider or add static inputs below
-#
-# Example static input for a worker cluster:
-#   inputs:
-#     - id: worker-1
-#       cluster: worker-1
+# To add a worker cluster, add it to config.yaml:
+#   workerClusters:
+#     - name: worker-1
 #       kubeconfigSecret: worker-1-kubeconfig
 #
 apiVersion: fluxcd.controlplane.io/v1
@@ -19,12 +14,13 @@ metadata:
   name: worker-clusters
   namespace: flux-system
 spec:
-  # Uncomment and configure inputsFrom to use dynamic worker cluster discovery:
-  # inputsFrom:
-  #   - apiVersion: fluxcd.controlplane.io/v1
-  #     kind: ResourceSetInputProvider
-  #     name: worker-cluster-registry
-  inputs: []
+  inputs:
+{{- if .workerClusters }}
+{{- range .workerClusters }}
+    - id: {{ .name }}
+      cluster: {{ .name }}
+      kubeconfigSecret: {{ .kubeconfigSecret }}
+{{- end }}
   resourcesTemplate: |
     ---
     apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -44,6 +40,9 @@ spec:
       kubeConfig:
         secretRef:
           name: << inputs.kubeconfigSecret >>
+{{- else }}
+    []
+{{- end }}
   dependsOn:
     - apiVersion: fluxcd.controlplane.io/v1
       kind: FluxInstance
