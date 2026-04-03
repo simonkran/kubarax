@@ -155,6 +155,91 @@ func TestGenerateSchema(t *testing.T) {
 	assert.NotNil(t, schema.Ref)
 }
 
+func TestConfigWithGitRepositories(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yaml")
+
+	yamlContent := `clusters:
+  - name: test-cluster
+    stage: dev
+    type: controlplane
+    dnsName: test.example.com
+    fluxcd:
+      distribution:
+        version: "2.x"
+        registry: ghcr.io/fluxcd
+      sync:
+        kind: GitRepository
+        url: https://github.com/org/repo
+        ref: refs/heads/main
+        path: clusters/test-cluster
+        interval: 5m
+      gitRepositories:
+        - name: app-repo
+          url: https://github.com/org/app-repo
+          branch: develop
+          secretRef: app-repo-creds
+          interval: 10m
+        - name: config-repo
+          url: https://github.com/org/config-repo
+    services:
+      traefik:
+        status: enabled
+      certManager:
+        status: enabled
+      externalDns:
+        status: enabled
+      externalSecrets:
+        status: enabled
+      kubePrometheusStack:
+        status: enabled
+      loki:
+        status: enabled
+      metricsServer:
+        status: enabled
+      kyverno:
+        status: disabled
+      kyvernoPolicies:
+        status: disabled
+      kyvernoPolicyReporter:
+        status: disabled
+      oauth2Proxy:
+        status: disabled
+      longhorn:
+        status: disabled
+      metallb:
+        status: disabled
+      fluxWebUI:
+        status: enabled
+      homeDashboard:
+        status: enabled
+      forgejo:
+        status: disabled
+`
+	err := os.WriteFile(configPath, []byte(yamlContent), 0600)
+	require.NoError(t, err)
+
+	cm := NewConfigManager(configPath)
+	err = cm.Load()
+	require.NoError(t, err)
+
+	cfg := cm.GetConfig()
+	cluster := cfg.Clusters[0]
+
+	require.Len(t, cluster.FluxCD.GitRepositories, 2)
+
+	assert.Equal(t, "app-repo", cluster.FluxCD.GitRepositories[0].Name)
+	assert.Equal(t, "https://github.com/org/app-repo", cluster.FluxCD.GitRepositories[0].URL)
+	assert.Equal(t, "develop", cluster.FluxCD.GitRepositories[0].Branch)
+	assert.Equal(t, "app-repo-creds", cluster.FluxCD.GitRepositories[0].SecretRef)
+	assert.Equal(t, "10m", cluster.FluxCD.GitRepositories[0].Interval)
+
+	assert.Equal(t, "config-repo", cluster.FluxCD.GitRepositories[1].Name)
+	assert.Equal(t, "https://github.com/org/config-repo", cluster.FluxCD.GitRepositories[1].URL)
+	assert.Empty(t, cluster.FluxCD.GitRepositories[1].Branch)
+	assert.Empty(t, cluster.FluxCD.GitRepositories[1].SecretRef)
+}
+
 func TestDefaultServices(t *testing.T) {
 	services := DefaultServices()
 

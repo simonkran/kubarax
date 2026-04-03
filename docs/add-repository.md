@@ -1,12 +1,67 @@
 # Add Repository
 
-To deploy applications with FluxCD, you need to register Git repositories and Helm repositories as Flux source objects. This is the kubarax equivalent of adding a repository in kubara's ArgoCD configuration.
+To deploy applications with FluxCD, you need to register Git repositories and Helm repositories as Flux source objects.
 
-## Add a Git Repository
+## Recommended: Declarative via config.yaml
 
-### Step 1: Store Credentials
+The simplest way to add repositories is to declare them in `config.yaml` and run `kubarax generate --helm`.
 
-Create a Kubernetes secret with the repository credentials:
+### Git Repositories
+
+Add Git repository sources to your cluster configuration:
+
+```yaml
+clusters:
+  - name: my-cluster
+    # ... existing config ...
+    fluxcd:
+      # ... existing fluxcd config ...
+      gitRepositories:
+        - name: my-app-repo
+          url: https://github.com/org/my-app-repo
+          branch: main
+          secretRef: my-app-repo-credentials
+        - name: team-configs
+          url: https://github.com/org/team-configs
+          branch: develop
+          interval: 10m
+```
+
+**Fields:**
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `name` | yes | — | Resource name for the GitRepository CR |
+| `url` | yes | — | Git repository HTTPS URL |
+| `branch` | no | `main` | Branch to track |
+| `secretRef` | no | — | Name of K8s Secret with credentials |
+| `interval` | no | `5m` | Reconciliation interval |
+
+Then generate:
+
+```bash
+kubarax generate --helm
+```
+
+This creates `GitRepository` CRs in `customer-service-catalog/helm/<cluster-name>/flux-system/gitrepositories.yaml` and adds them to the kustomization automatically.
+
+### Helm Repositories
+
+Helm repositories are also declared in `config.yaml`:
+
+```yaml
+fluxcd:
+  helmRepositories:
+    - name: bitnami
+      url: https://charts.bitnami.com/bitnami
+    - name: my-oci-registry
+      url: oci://ghcr.io/my-org/charts
+      type: oci
+      secretRef: oci-registry-credentials
+```
+
+### Credentials
+
+For repositories requiring authentication, create a Kubernetes Secret before or alongside your repository declaration:
 
 ```bash
 kubectl create secret generic my-app-repo-credentials \
@@ -41,12 +96,15 @@ spec:
         property: pat
 ```
 
-### Step 2: Create a GitRepository Source
+## Advanced: Manual Repository Creation
+
+For cases not covered by the declarative approach, you can manually create repository manifests.
+
+### Git Repository
 
 Add to `customer-service-catalog/helm/<cluster-name>/sources/`:
 
 ```yaml
-# customer-service-catalog/helm/<cluster-name>/sources/my-app-repo.yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -61,97 +119,15 @@ spec:
     name: my-app-repo-credentials
 ```
 
-### Step 3: Add to Kustomization
+Then add to `customer-service-catalog/helm/<cluster-name>/kustomization.yaml`:
 
 ```yaml
-# customer-service-catalog/helm/<cluster-name>/kustomization.yaml
 resources:
   # ... existing resources ...
   - sources/my-app-repo.yaml
 ```
 
-### Step 4: Commit and Push
-
-```bash
-git add .
-git commit -m "feat: add my-app-repo git source"
-git push
-```
-
-## Add a Helm Repository
-
-### HTTPS Helm Repository
-
-```yaml
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: bitnami
-  namespace: flux-system
-spec:
-  interval: 1h
-  url: https://charts.bitnami.com/bitnami
-```
-
-### OCI Helm Repository
-
-```yaml
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: my-oci-registry
-  namespace: flux-system
-spec:
-  interval: 1h
-  url: oci://ghcr.io/my-org/charts
-  type: oci
-  secretRef:
-    name: oci-registry-credentials
-```
-
-### Private Helm Repository
-
-```yaml
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: private-charts
-  namespace: flux-system
-spec:
-  interval: 1h
-  url: https://charts.internal.example.com
-  secretRef:
-    name: helm-repo-credentials
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: helm-repo-credentials
-  namespace: flux-system
-type: Opaque
-stringData:
-  username: chart-reader
-  password: your-password-here
-```
-
-## Using Repositories in config.yaml
-
-You can also declare additional Helm repositories in `config.yaml`:
-
-```yaml
-fluxcd:
-  helmRepositories:
-    - name: bitnami
-      url: https://charts.bitnami.com/bitnami
-    - name: my-oci-registry
-      url: oci://ghcr.io/my-org/charts
-      type: oci
-      secretRef: oci-registry-credentials
-```
-
-These will be generated automatically by `kubarax generate --helm` into the `helmrepositories.yaml` file.
-
-## SSH Git Repository
+### SSH Git Repository
 
 For SSH-based Git access:
 

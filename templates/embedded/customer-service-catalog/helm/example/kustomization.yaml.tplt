@@ -8,6 +8,9 @@ resources:
   # Flux sources
   - flux-system/kustomization.yaml
   - flux-system/helmrepositories.yaml
+{{- if .fluxcd.gitRepositories }}
+  - flux-system/gitrepositories.yaml
+{{- end }}
   # HelmReleases for platform services
   - helmreleases/cert-manager.yaml
   - helmreleases/external-dns.yaml

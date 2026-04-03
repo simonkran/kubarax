@@ -1,0 +1,17 @@
+{{- range .fluxcd.gitRepositories }}
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: {{ .name }}
+  namespace: flux-system
+spec:
+  interval: {{ .interval | default "5m" }}
+  url: {{ .url }}
+  ref:
+    branch: {{ .branch | default "main" }}
+  {{- if .secretRef }}
+  secretRef:
+    name: {{ .secretRef }}
+  {{- end }}
+{{- end }}

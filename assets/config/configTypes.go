@@ -48,6 +48,7 @@ type FluxConfig struct {
 	Cluster          FluxCluster      `yaml:"cluster,omitempty" json:"cluster,omitempty" jsonschema:"description=Cluster profile configuration"`
 	Sync             FluxSync         `yaml:"sync" json:"sync" jsonschema:"required,description=Flux sync configuration (GitRepository + Kustomization)"`
 	HelmRepositories []HelmRepoConfig `yaml:"helmRepositories,omitempty" json:"helmRepositories,omitempty" jsonschema:"description=Additional Helm repositories"`
+	GitRepositories  []GitRepoConfig  `yaml:"gitRepositories,omitempty" json:"gitRepositories,omitempty" jsonschema:"description=Additional Git repositories"`
 	WebUI            FluxWebUI        `yaml:"webUI,omitempty" json:"webUI,omitempty" jsonschema:"description=Flux Operator Web UI configuration"`
 }
 
@@ -86,6 +87,15 @@ type HelmRepoConfig struct {
 	URL       string `yaml:"url" json:"url" jsonschema:"required,description=Repository URL"`
 	Type      string `yaml:"type,omitempty" json:"type,omitempty" jsonschema:"enum=default,enum=oci,description=Repository type"`
 	SecretRef string `yaml:"secretRef,omitempty" json:"secretRef,omitempty" jsonschema:"description=Name of secret containing repo credentials"`
+}
+
+// GitRepoConfig holds additional Git repository source configuration
+type GitRepoConfig struct {
+	Name      string `yaml:"name" json:"name" jsonschema:"required,description=Repository name"`
+	URL       string `yaml:"url" json:"url" jsonschema:"required,description=Git repository URL"`
+	Branch    string `yaml:"branch,omitempty" json:"branch,omitempty" jsonschema:"default=main,description=Git branch to track"`
+	SecretRef string `yaml:"secretRef,omitempty" json:"secretRef,omitempty" jsonschema:"description=Name of secret containing repo credentials"`
+	Interval  string `yaml:"interval,omitempty" json:"interval,omitempty" jsonschema:"default=5m,description=Reconciliation interval"`
 }
 
 // Services holds all platform service configurations
