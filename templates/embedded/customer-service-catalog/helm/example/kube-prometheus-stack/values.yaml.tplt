@@ -1,0 +1,16 @@
+externalSecrets:
+  grafana-oauth:
+    secretStoreRef:
+      name: {{ .name }}-{{ .stage }}
+      kind: ClusterSecretStore
+    target:
+      name: grafana-oauth
+    data:
+      - secretKey: client-id
+        remoteRef:
+          key: grafana
+          property: client-id
+      - secretKey: client-secret
+        remoteRef:
+          key: grafana
+          property: client-secret

@@ -1,3 +1,5 @@
+externalSecrets: {}
+
 kube-prometheus-stack:
   fullnameOverride: prometheus
   prometheusOperator:

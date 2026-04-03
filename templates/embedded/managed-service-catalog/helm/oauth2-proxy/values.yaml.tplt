@@ -1,3 +1,5 @@
+externalSecrets: {}
+
 oauth2-proxy:
   config:
     cookieName: "_kubarax_oauth2"

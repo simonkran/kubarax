@@ -1,0 +1,20 @@
+externalSecrets:
+  oauth2-proxy-credentials:
+    secretStoreRef:
+      name: {{ .name }}-{{ .stage }}
+      kind: ClusterSecretStore
+    target:
+      name: oauth2-proxy-credentials
+    data:
+      - secretKey: client-id
+        remoteRef:
+          key: oauth2-proxy
+          property: client-id
+      - secretKey: client-secret
+        remoteRef:
+          key: oauth2-proxy
+          property: client-secret
+      - secretKey: cookie-secret
+        remoteRef:
+          key: oauth2-proxy
+          property: cookie-secret

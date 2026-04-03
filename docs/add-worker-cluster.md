@@ -109,7 +109,7 @@ Store the kubeconfig in your secret backend (Vault, AWS Secrets Manager, etc.), 
 > **Prerequisite**: A `ClusterSecretStore` must exist on the control plane cluster. See [Add External Secrets](add-external-secrets.md) for setup instructions (via bootstrap or GitOps).
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: worker-0-kubeconfig

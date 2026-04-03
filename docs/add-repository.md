@@ -73,7 +73,7 @@ kubectl create secret generic my-app-repo-credentials \
 For production, use External Secrets to sync from your vault:
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: my-app-repo-credentials

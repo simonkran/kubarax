@@ -25,7 +25,7 @@ Use the `--with-es-css-file` flag to apply a ClusterSecretStore manifest during 
 Create a manifest file:
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: {{ .name }}-vault
@@ -89,7 +89,7 @@ Each key under `clusterSecretStores` becomes a `ClusterSecretStore` resource man
 Once a `ClusterSecretStore` exists, create `ExternalSecret` resources to sync individual secrets:
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: my-app-credentials
