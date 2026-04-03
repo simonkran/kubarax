@@ -240,6 +240,132 @@ func TestConfigWithGitRepositories(t *testing.T) {
 	assert.Empty(t, cluster.FluxCD.GitRepositories[1].SecretRef)
 }
 
+func TestConfigWithApplications(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yaml")
+
+	yamlContent := `clusters:
+  - name: test-cluster
+    stage: dev
+    type: controlplane
+    dnsName: test.example.com
+    fluxcd:
+      distribution:
+        version: "2.x"
+        registry: ghcr.io/fluxcd
+      sync:
+        kind: GitRepository
+        url: https://github.com/org/repo
+        ref: refs/heads/main
+        path: clusters/test-cluster
+        interval: 5m
+    services:
+      traefik:
+        status: enabled
+      certManager:
+        status: enabled
+      externalDns:
+        status: enabled
+      externalSecrets:
+        status: enabled
+      kubePrometheusStack:
+        status: enabled
+      loki:
+        status: enabled
+      metricsServer:
+        status: enabled
+      kyverno:
+        status: disabled
+      kyvernoPolicies:
+        status: disabled
+      kyvernoPolicyReporter:
+        status: disabled
+      oauth2Proxy:
+        status: disabled
+      longhorn:
+        status: disabled
+      metallb:
+        status: disabled
+      fluxWebUI:
+        status: enabled
+      homeDashboard:
+        status: enabled
+      forgejo:
+        status: disabled
+    applications:
+      - name: node-red
+        type: kustomization
+        sourceRef:
+          kind: GitRepository
+          name: app-repo
+        path: ./apps/node-red
+        targetNamespace: home-automation
+        dependsOn:
+          - cert-manager
+      - name: grafana
+        type: helmrelease
+        sourceRef:
+          kind: HelmRepository
+          name: grafana-charts
+        chart: grafana
+        chartVersion: "7.x"
+        targetNamespace: monitoring
+        createNamespace: true
+        values:
+          replicas: 1
+      - name: edge-agent
+        type: kustomization
+        sourceRef:
+          kind: GitRepository
+          name: app-repo
+        path: ./apps/edge-agent
+        targetNamespace: edge
+        serviceAccountName: flux-edge
+        kubeConfig:
+          secretRef: worker-kubeconfig
+`
+	err := os.WriteFile(configPath, []byte(yamlContent), 0600)
+	require.NoError(t, err)
+
+	cm := NewConfigManager(configPath)
+	err = cm.Load()
+	require.NoError(t, err)
+
+	cfg := cm.GetConfig()
+	cluster := cfg.Clusters[0]
+
+	require.Len(t, cluster.Applications, 3)
+
+	// Kustomization app
+	app0 := cluster.Applications[0]
+	assert.Equal(t, "node-red", app0.Name)
+	assert.Equal(t, "kustomization", app0.Type)
+	assert.Equal(t, "GitRepository", app0.SourceRef.Kind)
+	assert.Equal(t, "app-repo", app0.SourceRef.Name)
+	assert.Equal(t, "./apps/node-red", app0.Path)
+	assert.Equal(t, "home-automation", app0.TargetNamespace)
+	assert.Equal(t, []string{"cert-manager"}, app0.DependsOn)
+
+	// HelmRelease app
+	app1 := cluster.Applications[1]
+	assert.Equal(t, "grafana", app1.Name)
+	assert.Equal(t, "helmrelease", app1.Type)
+	assert.Equal(t, "HelmRepository", app1.SourceRef.Kind)
+	assert.Equal(t, "grafana-charts", app1.SourceRef.Name)
+	assert.Equal(t, "grafana", app1.Chart)
+	assert.Equal(t, "7.x", app1.ChartVersion)
+	assert.Equal(t, "monitoring", app1.TargetNamespace)
+	assert.True(t, app1.CreateNamespace)
+	assert.NotNil(t, app1.Values)
+
+	// App with kubeConfig
+	app2 := cluster.Applications[2]
+	assert.Equal(t, "edge-agent", app2.Name)
+	assert.Equal(t, "flux-edge", app2.ServiceAccount)
+	require.NotNil(t, app2.KubeConfig)
+	assert.Equal(t, "worker-kubeconfig", app2.KubeConfig.SecretRef)
+}
+
 func TestDefaultServices(t *testing.T) {
 	services := DefaultServices()
 

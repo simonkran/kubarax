@@ -29,3 +29,7 @@ resources:
   - tenants/tenants.yaml
   - tenants/kustomizations.yaml
 {{- end }}
+{{- if .applications }}
+  # User applications
+  - apps/applications.yaml
+{{- end }}

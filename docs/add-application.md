@@ -9,9 +9,94 @@ For platform-level services deployed across clusters, see [Add HelmRelease](add-
 - The application's source repository has been [added](add-repository.md)
 - A tenant project/namespace has been [created](add-project.md) if needed
 
-## Option A: Deploy from a Git Repository (Kustomize/Plain YAML)
+## Recommended: Declarative via config.yaml
 
-### Step 1: Create a Kustomization
+The simplest way to add an application is to declare it in `config.yaml`. The `kubarax generate` command will create the appropriate Flux resources automatically.
+
+### Git-based Application (Kustomization)
+
+```yaml
+# config.yaml
+clusters:
+  - name: my-platform
+    # ... existing config ...
+    applications:
+      - name: my-app
+        type: kustomization
+        sourceRef:
+          kind: GitRepository
+          name: my-app-repo        # Must exist as a GitRepository source
+        path: ./deploy/kubernetes   # Path within the repo
+        targetNamespace: team-alpha
+```
+
+### Helm-based Application (HelmRelease)
+
+```yaml
+    applications:
+      - name: my-helm-app
+        type: helmrelease
+        sourceRef:
+          kind: HelmRepository
+          name: my-org-charts      # Must exist as a HelmRepository source
+        chart: my-helm-app
+        chartVersion: "1.2.x"
+        targetNamespace: team-alpha
+        createNamespace: true
+        values:
+          replicaCount: 2
+          ingress:
+            enabled: true
+```
+
+### Worker Cluster Deployment
+
+```yaml
+    applications:
+      - name: edge-agent
+        type: kustomization
+        sourceRef:
+          kind: GitRepository
+          name: app-repo
+        path: ./apps/edge-agent
+        targetNamespace: edge
+        kubeConfig:
+          secretRef: worker-kubeconfig
+```
+
+### All Available Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `name` | Yes | Application name (used as resource name) |
+| `type` | Yes | `kustomization` or `helmrelease` |
+| `sourceRef.kind` | Yes | `GitRepository` or `HelmRepository` |
+| `sourceRef.name` | Yes | Name of the Flux source resource |
+| `path` | No | Path within the source (kustomization, or git-based chart) |
+| `chart` | No | Helm chart name (helmrelease with HelmRepository) |
+| `chartVersion` | No | Chart version semver range |
+| `targetNamespace` | No | Deploy into this namespace |
+| `createNamespace` | No | Create namespace if it doesn't exist |
+| `interval` | No | Reconciliation interval (default: 5m/10m) |
+| `dependsOn` | No | List of dependency names |
+| `serviceAccountName` | No | ServiceAccount for impersonation |
+| `kubeConfig.secretRef` | No | Secret for remote cluster deployment |
+| `values` | No | Helm values (helmrelease only) |
+
+After editing `config.yaml`, run:
+
+```bash
+kubarax generate
+git add . && git commit -m "feat: add my-app" && git push
+```
+
+## Manual Options
+
+The following options describe how to manually create application manifests without using `config.yaml`.
+
+### Option A: Deploy from a Git Repository (Kustomize/Plain YAML)
+
+#### Step 1: Create a Kustomization
 
 Add a `Kustomization` that points to the application's manifests in a Git repository:
 
@@ -34,7 +119,7 @@ spec:
   timeout: 5m
 ```
 
-### Step 2: Add to Kustomization
+#### Step 2: Add to Kustomization
 
 ```yaml
 # customer-service-catalog/helm/<cluster-name>/kustomization.yaml
@@ -43,7 +128,7 @@ resources:
   - apps/my-app.yaml
 ```
 
-### Step 3: Commit and Push
+#### Step 3: Commit and Push
 
 ```bash
 git add .
@@ -51,9 +136,9 @@ git commit -m "feat: add my-app deployment"
 git push
 ```
 
-## Option B: Deploy from a Helm Chart
+### Option B: Deploy from a Helm Chart
 
-### Step 1: Create a HelmRelease
+#### Step 1: Create a HelmRelease
 
 ```yaml
 # customer-service-catalog/helm/<cluster-name>/apps/my-helm-app.yaml
@@ -95,7 +180,7 @@ spec:
               pathType: Prefix
 ```
 
-## Option C: Deploy to a Worker Cluster
+### Option C: Deploy to a Worker Cluster
 
 To deploy an application to a remote worker cluster from the control plane:
 
@@ -118,7 +203,7 @@ spec:
       name: worker-0-kubeconfig   # Remote cluster credentials
 ```
 
-## Option D: Deploy with Developer Self-Service
+### Option D: Deploy with Developer Self-Service
 
 For developer self-service, use a `ResourceSet` with `ResourceSetInputProvider` to automatically deploy from Git branches or pull requests:
 
@@ -168,6 +253,7 @@ This creates preview environments automatically when a PR with the `deploy/previ
 
 | kubara Application | kubarax equivalent |
 |---|---|
+| `bootstrapValues.applications[]` in values.yaml | `clusters[].applications[]` in config.yaml |
 | `Application` CR pointing to a repo | `Kustomization` or `HelmRelease` CR |
 | `destination.serverName` | `kubeConfig.secretRef` for remote clusters |
 | `repoPath` / `repoUrl` | `sourceRef` + `path` |

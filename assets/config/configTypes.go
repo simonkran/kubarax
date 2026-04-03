@@ -19,13 +19,42 @@ type Cluster struct {
 	Terraform             *Terraform `yaml:"terraform,omitempty" json:"terraform,omitempty" jsonschema:"description=Terraform configuration"`
 	FluxCD                FluxConfig `yaml:"fluxcd" json:"fluxcd" jsonschema:"required,description=FluxCD configuration"`
 	Services              Services   `yaml:"services" json:"services" jsonschema:"required,description=Platform services configuration"`
-	Projects              []Project  `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
+	Projects              []Project      `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
+	Applications          []Application  `yaml:"applications,omitempty" json:"applications,omitempty" jsonschema:"description=Declarative application deployments for this cluster"`
 }
 
 // Project represents a tenant project (namespace + RBAC)
 type Project struct {
 	Name        string `yaml:"name" json:"name" jsonschema:"required,description=Project/tenant name"`
 	ClusterRole string `yaml:"clusterRole,omitempty" json:"clusterRole,omitempty" jsonschema:"default=cluster-admin,description=ClusterRole to bind to the tenant ServiceAccount"`
+}
+
+// Application represents a declarative application deployment
+type Application struct {
+	Name            string         `yaml:"name" json:"name" jsonschema:"required,description=Application name"`
+	Type            string         `yaml:"type" json:"type" jsonschema:"required,enum=kustomization,enum=helmrelease,description=Deployment type"`
+	SourceRef       AppSourceRef   `yaml:"sourceRef" json:"sourceRef" jsonschema:"required,description=Flux source reference"`
+	Path            string         `yaml:"path,omitempty" json:"path,omitempty" jsonschema:"description=Path within source (for kustomization or git-based charts)"`
+	Chart           string         `yaml:"chart,omitempty" json:"chart,omitempty" jsonschema:"description=Helm chart name (for helmrelease with HelmRepository)"`
+	ChartVersion    string         `yaml:"chartVersion,omitempty" json:"chartVersion,omitempty" jsonschema:"description=Chart version semver range"`
+	TargetNamespace string         `yaml:"targetNamespace,omitempty" json:"targetNamespace,omitempty" jsonschema:"description=Target namespace"`
+	CreateNamespace bool           `yaml:"createNamespace,omitempty" json:"createNamespace,omitempty" jsonschema:"description=Create namespace if missing"`
+	Interval        string         `yaml:"interval,omitempty" json:"interval,omitempty" jsonschema:"default=5m,description=Reconciliation interval"`
+	DependsOn       []string       `yaml:"dependsOn,omitempty" json:"dependsOn,omitempty" jsonschema:"description=Dependency names"`
+	ServiceAccount  string         `yaml:"serviceAccountName,omitempty" json:"serviceAccountName,omitempty" jsonschema:"description=ServiceAccount for impersonation"`
+	KubeConfig      *AppKubeConfig `yaml:"kubeConfig,omitempty" json:"kubeConfig,omitempty" jsonschema:"description=Remote cluster kubeconfig secret"`
+	Values          map[string]any `yaml:"values,omitempty" json:"values,omitempty" jsonschema:"description=Helm values (helmrelease only)"`
+}
+
+// AppSourceRef identifies the Flux source object
+type AppSourceRef struct {
+	Kind string `yaml:"kind" json:"kind" jsonschema:"required,enum=GitRepository,enum=HelmRepository,description=Source kind"`
+	Name string `yaml:"name" json:"name" jsonschema:"required,description=Source resource name"`
+}
+
+// AppKubeConfig references a secret for cross-cluster deployment
+type AppKubeConfig struct {
+	SecretRef string `yaml:"secretRef" json:"secretRef" jsonschema:"required,description=Kubeconfig secret name"`
 }
 
 // Terraform holds cloud infrastructure configuration
