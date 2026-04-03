@@ -82,7 +82,7 @@ func TemplateFiles(paths []string, data map[string]interface{}) ([]TemplateResul
 
 		// Process .tplt files through Go template engine
 		if strings.HasSuffix(path, ".tplt") {
-			rendered, err := renderTemplate(path, string(content), data)
+			rendered, err := RenderTemplate(path, string(content), data)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("templating %s: %w", path, err))
 				continue
@@ -109,8 +109,8 @@ func TemplateAllFiles(templateType TemplateType, data map[string]interface{}) ([
 	return TemplateFiles(paths, data)
 }
 
-// renderTemplate processes a single template string with sprig functions
-func renderTemplate(name, content string, data map[string]interface{}) (string, error) {
+// RenderTemplate processes a single template string with sprig functions
+func RenderTemplate(name, content string, data map[string]interface{}) (string, error) {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["toYaml"] = func(v interface{}) string {
 		out, err := yaml.Marshal(v)

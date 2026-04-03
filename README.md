@@ -64,6 +64,9 @@ kubarax generate --helm --dry-run
 ```bash
 # Bootstrap the Flux Operator onto your control plane cluster
 kubarax bootstrap my-cluster --with-es-crds --with-prometheus-crds
+
+# Optionally apply a ClusterSecretStore during bootstrap
+kubarax bootstrap my-cluster --with-es-crds --with-es-css-file ./cluster-secret-store.yaml
 ```
 
 This will:
@@ -71,6 +74,7 @@ This will:
 2. Create a `FluxInstance` CR that installs and manages all Flux controllers
 3. Configure sync from your Git repository
 4. Optionally install external-secrets and prometheus CRDs
+5. Optionally apply a ClusterSecretStore manifest (supports go-template + sprig)
 
 ## Commands
 

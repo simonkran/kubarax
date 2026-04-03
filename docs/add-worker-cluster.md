@@ -104,7 +104,9 @@ kubectl create secret generic worker-0-kubeconfig \
 
 ### Option B: External Secrets (production)
 
-Store the kubeconfig in your secret backend (Vault, AWS Secrets Manager, etc.), then create an `ExternalSecret` that syncs it:
+Store the kubeconfig in your secret backend (Vault, AWS Secrets Manager, etc.), then create an `ExternalSecret` that syncs it.
+
+> **Prerequisite**: A `ClusterSecretStore` must exist on the control plane cluster. See [Add External Secrets](add-external-secrets.md) for setup instructions (via bootstrap or GitOps).
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1

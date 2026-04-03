@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"kubarax/assets/envmap"
 	"kubarax/internal/helm"
 	"kubarax/internal/k8s"
+	"kubarax/templates"
 
 	"github.com/rs/zerolog/log"
 )
@@ -107,7 +109,15 @@ func Bootstrap(ctx context.Context, opts *Options) error {
 		return fmt.Errorf("installing additional charts: %w", err)
 	}
 
-	// Step 9: Print completion message
+	// Step 9: Apply ClusterSecretStore if provided (requires external-secrets CRDs from Step 8)
+	if opts.WithESCSSPath != "" {
+		_ = client.RefreshDiscovery()
+		if err := applyClusterSecretStore(ctx, client, opts); err != nil {
+			return fmt.Errorf("applying ClusterSecretStore: %w", err)
+		}
+	}
+
+	// Step 10: Print completion message
 	printCompletionMessage(opts)
 	log.Info().Msg("Flux Operator bootstrap completed successfully")
 	return nil
@@ -390,6 +400,52 @@ func buildAdditionalCharts(opts *Options) []BootstrapChart {
 			EnsureCRD:       opts.WithProm,
 		},
 	}
+}
+
+func applyClusterSecretStore(ctx context.Context, client *k8s.Client, opts *Options) error {
+	if opts.WithESCSSPath == "" {
+		return nil
+	}
+
+	log.Info().Msg("Applying ClusterSecretStore manifest")
+
+	content, err := os.ReadFile(opts.WithESCSSPath)
+	if err != nil {
+		return fmt.Errorf("reading ClusterSecretStore file %s: %w", opts.WithESCSSPath, err)
+	}
+
+	// Build template context from cluster config (same pattern as cmd/generate.go buildTemplateContext)
+	jsonBytes, err := json.Marshal(opts.ClusterConfig)
+	if err != nil {
+		return fmt.Errorf("marshaling cluster config: %w", err)
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &data); err != nil {
+		return fmt.Errorf("unmarshaling cluster config: %w", err)
+	}
+
+	rendered, err := templates.RenderTemplate("ClusterSecretStore", string(content), data)
+	if err != nil {
+		return fmt.Errorf("rendering ClusterSecretStore template: %w", err)
+	}
+
+	if opts.DryRun {
+		log.Info().Msg("[DRY-RUN] Would apply ClusterSecretStore manifest")
+		log.Info().Msgf("[DRY-RUN] ClusterSecretStore manifest:\n%s", rendered)
+		return nil
+	}
+
+	applyOpts := k8s.DefaultApplyOptions()
+	applyOpts.FieldManager = "kubarax-cluster-secret-store"
+	applyOpts.ForceConflicts = true
+
+	if err := client.ApplyManifest(ctx, []byte(rendered), applyOpts); err != nil {
+		return fmt.Errorf("applying ClusterSecretStore: %w", err)
+	}
+
+	log.Info().Msg("ClusterSecretStore applied successfully")
+	return nil
 }
 
 func applySecrets(ctx context.Context, client *k8s.Client, opts *Options) error {

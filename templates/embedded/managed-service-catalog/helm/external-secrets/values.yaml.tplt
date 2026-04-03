@@ -1,3 +1,5 @@
+clusterSecretStores: {}
+
 external-secrets:
   installCRDs: true
   replicaCount: 1
