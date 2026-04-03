@@ -125,19 +125,25 @@ func resolveAndValidatePath(path, cwd string) (string, error) {
 		return "", fmt.Errorf("cannot resolve path: %w", err)
 	}
 
-	// If file exists, resolve symlinks
+	// Resolve symlinks: if file exists resolve it directly,
+	// otherwise resolve its parent directory
 	if _, err := os.Lstat(absPath); err == nil {
 		resolved, err := filepath.EvalSymlinks(absPath)
 		if err != nil {
 			return "", fmt.Errorf("cannot resolve symlinks: %w", err)
 		}
 		absPath = resolved
+	} else if resolvedDir, err := filepath.EvalSymlinks(filepath.Dir(absPath)); err == nil {
+		absPath = filepath.Join(resolvedDir, filepath.Base(absPath))
 	}
 
 	// Ensure it stays within cwd
 	absCwd, err := filepath.Abs(cwd)
 	if err != nil {
 		return "", fmt.Errorf("cannot resolve cwd: %w", err)
+	}
+	if resolved, err := filepath.EvalSymlinks(absCwd); err == nil {
+		absCwd = resolved
 	}
 
 	if !strings.HasPrefix(absPath, absCwd) {
