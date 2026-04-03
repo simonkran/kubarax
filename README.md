@@ -172,6 +172,15 @@ To add worker clusters, either:
 1. Add static inputs to the worker-clusters ResourceSet
 2. Create a `ResourceSetInputProvider` for dynamic discovery
 
+## Managing Your Platform
+
+- [Add Worker Cluster](docs/add-worker-cluster.md) — Onboard spoke clusters managed from the control plane
+- [Add Project](docs/add-project.md) — Create tenant namespaces with RBAC isolation
+- [Add Repository](docs/add-repository.md) — Register Git and Helm repositories as Flux sources
+- [Add HelmRelease](docs/add-helmrelease.md) — Deploy services via HelmRelease and multi-cluster ResourceSets
+- [Add Application](docs/add-application.md) — Deploy standalone applications from Git or Helm
+- [Add SSO](docs/add-sso.md) — Configure Single Sign-On with OAuth2 Proxy and OIDC providers
+
 ## Building
 
 ```bash
