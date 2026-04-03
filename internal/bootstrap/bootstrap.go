@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -329,12 +330,22 @@ func installAdditionalCharts(ctx context.Context, client *k8s.Client, opts *Opti
 			return fmt.Errorf("updating dependencies for %s: %w", chart.Name, err)
 		}
 
+		// Filter overlay values to only include files that exist
+		var valuesPaths []string
+		for _, v := range chart.OverlayValues {
+			if info, err := os.Stat(v); err == nil && !info.IsDir() {
+				valuesPaths = append(valuesPaths, v)
+			} else {
+				log.Debug().Msgf("Skipping non-existent overlay values: %s", v)
+			}
+		}
+
 		// Template and apply
 		manifest, err := helm.Template(ctx, helm.TemplateOptions{
 			ReleaseName: chart.Name,
 			ChartPath:   chart.Path,
 			Namespace:   chart.Namespace,
-			ValuesPaths: chart.OverlayValues,
+			ValuesPaths: valuesPaths,
 		})
 		if err != nil {
 			return fmt.Errorf("templating %s: %w", chart.Name, err)
