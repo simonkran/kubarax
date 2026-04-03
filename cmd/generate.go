@@ -32,12 +32,12 @@ type GenerateOptions struct {
 
 // GenerateFlags holds raw CLI flags
 type GenerateFlags struct {
-	TerraformFlag      bool
-	HelmFlag           bool
-	DryRunFlag         bool
-	ManagedCatalogPath string
+	TerraformFlag       bool
+	HelmFlag            bool
+	DryRunFlag          bool
+	ManagedCatalogPath  string
 	CustomerCatalogPath string
-	EnvPrefixFlag      string
+	EnvPrefixFlag       string
 }
 
 // NewGenerateFlags returns default generate flags

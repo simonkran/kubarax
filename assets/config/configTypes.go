@@ -7,21 +7,21 @@ type Config struct {
 
 // Cluster represents a single Kubernetes cluster configuration
 type Cluster struct {
-	Name                  string     `yaml:"name" json:"name" jsonschema:"required,description=Unique name for this cluster"`
-	Stage                 string     `yaml:"stage" json:"stage" jsonschema:"required,description=Deployment stage (e.g. dev/staging/prod)"`
-	Type                  string     `yaml:"type" json:"type" jsonschema:"required,enum=controlplane,enum=worker,description=Cluster type"`
-	DNSName               string     `yaml:"dnsName" json:"dnsName" jsonschema:"required,description=DNS name for the cluster"`
-	IngressClassName      string     `yaml:"ingressClassName,omitempty" json:"ingressClassName,omitempty" jsonschema:"description=Ingress class name"`
-	PrivateLoadBalancerIP string     `yaml:"privateLoadBalancerIP,omitempty" json:"privateLoadBalancerIP,omitempty" jsonschema:"description=Private LB IP"`
-	PublicLoadBalancerIP  string     `yaml:"publicLoadBalancerIP,omitempty" json:"publicLoadBalancerIP,omitempty" jsonschema:"description=Public LB IP"`
-	SSOOrg                string     `yaml:"ssoOrg,omitempty" json:"ssoOrg,omitempty" jsonschema:"description=SSO organization"`
-	SSOTeam               string     `yaml:"ssoTeam,omitempty" json:"ssoTeam,omitempty" jsonschema:"description=SSO team"`
-	Terraform             *Terraform `yaml:"terraform,omitempty" json:"terraform,omitempty" jsonschema:"description=Terraform configuration"`
-	FluxCD                FluxConfig `yaml:"fluxcd" json:"fluxcd" jsonschema:"required,description=FluxCD configuration"`
-	Services              Services   `yaml:"services" json:"services" jsonschema:"required,description=Platform services configuration"`
-	Projects              []Project        `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
-	Applications          []Application    `yaml:"applications,omitempty" json:"applications,omitempty" jsonschema:"description=Declarative application deployments for this cluster"`
-	WorkerClusters        []WorkerCluster  `yaml:"workerClusters,omitempty" json:"workerClusters,omitempty" jsonschema:"description=Worker clusters managed by this controlplane"`
+	Name                  string          `yaml:"name" json:"name" jsonschema:"required,description=Unique name for this cluster"`
+	Stage                 string          `yaml:"stage" json:"stage" jsonschema:"required,description=Deployment stage (e.g. dev/staging/prod)"`
+	Type                  string          `yaml:"type" json:"type" jsonschema:"required,enum=controlplane,enum=worker,description=Cluster type"`
+	DNSName               string          `yaml:"dnsName" json:"dnsName" jsonschema:"required,description=DNS name for the cluster"`
+	IngressClassName      string          `yaml:"ingressClassName,omitempty" json:"ingressClassName,omitempty" jsonschema:"description=Ingress class name"`
+	PrivateLoadBalancerIP string          `yaml:"privateLoadBalancerIP,omitempty" json:"privateLoadBalancerIP,omitempty" jsonschema:"description=Private LB IP"`
+	PublicLoadBalancerIP  string          `yaml:"publicLoadBalancerIP,omitempty" json:"publicLoadBalancerIP,omitempty" jsonschema:"description=Public LB IP"`
+	SSOOrg                string          `yaml:"ssoOrg,omitempty" json:"ssoOrg,omitempty" jsonschema:"description=SSO organization"`
+	SSOTeam               string          `yaml:"ssoTeam,omitempty" json:"ssoTeam,omitempty" jsonschema:"description=SSO team"`
+	Terraform             *Terraform      `yaml:"terraform,omitempty" json:"terraform,omitempty" jsonschema:"description=Terraform configuration"`
+	FluxCD                FluxConfig      `yaml:"fluxcd" json:"fluxcd" jsonschema:"required,description=FluxCD configuration"`
+	Services              Services        `yaml:"services" json:"services" jsonschema:"required,description=Platform services configuration"`
+	Projects              []Project       `yaml:"projects,omitempty" json:"projects,omitempty" jsonschema:"description=Tenant projects for this cluster"`
+	Applications          []Application   `yaml:"applications,omitempty" json:"applications,omitempty" jsonschema:"description=Declarative application deployments for this cluster"`
+	WorkerClusters        []WorkerCluster `yaml:"workerClusters,omitempty" json:"workerClusters,omitempty" jsonschema:"description=Worker clusters managed by this controlplane"`
 }
 
 // WorkerCluster represents a worker cluster managed by a controlplane
