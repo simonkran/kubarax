@@ -3,14 +3,26 @@ kyverno:
     replicas: 1
     serviceMonitor:
       enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   backgroundController:
     enabled: true
     serviceMonitor:
       enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   cleanupController:
     enabled: true
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   reportsController:
     enabled: true
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   config:
     webhooks:
       - objectSelector:

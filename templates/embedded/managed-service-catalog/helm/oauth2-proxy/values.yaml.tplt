@@ -10,6 +10,12 @@ oauth2-proxy:
     email-domain: "*"
     cookie-domain: ".{{ .dnsName }}"
     whitelist-domain: ".{{ .dnsName }}"
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      memory: 100Mi
   ingress:
     enabled: true
     className: {{ .ingressClassName | default "traefik" }}
@@ -21,3 +27,5 @@ oauth2-proxy:
           - oauth2.{{ .dnsName }}
   serviceMonitor:
     enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+    labels:
+      monitoring.instance: "{{ .name }}-{{ .stage }}"

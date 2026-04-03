@@ -17,3 +17,8 @@ longhorn:
     replicas: 1
   monitoring:
     enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+  metrics:
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"

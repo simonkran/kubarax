@@ -1,15 +1,46 @@
 kube-prometheus-stack:
   fullnameOverride: prometheus
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+      limits:
+        memory: 100Mi
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   prometheus:
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
     prometheusSpec:
       retention: 15d
       replicas: 1
+      resources:
+        requests:
+          cpu: 57m
+          memory: 700Mi
+        limits:
+          memory: 700Mi
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
+      serviceMonitorSelector:
+        matchLabels:
+          monitoring.instance: "{{ .name }}-{{ .stage }}"
   grafana:
     enabled: true
     adminPassword: ""
+    resources:
+      requests:
+        cpu: 10m
+        memory: 200Mi
+      limits:
+        memory: 200Mi
+    serviceMonitor:
+      labels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
     ingress:
       enabled: true
       ingressClassName: {{ .ingressClassName | default "traefik" }}
@@ -21,9 +52,35 @@ kube-prometheus-stack:
             - grafana.{{ .dnsName }}
   alertmanager:
     enabled: true
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
     alertmanagerSpec:
       replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 100Mi
+        limits:
+          memory: 100Mi
+  kube-state-metrics:
+    prometheus:
+      monitor:
+        additionalLabels:
+          monitoring.instance: "{{ .name }}-{{ .stage }}"
   kubeStateMetrics:
     enabled: true
   nodeExporter:
     enabled: true
+  kubeApiServer:
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
+  kubelet:
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
+  coreDns:
+    serviceMonitor:
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"

@@ -1,12 +1,30 @@
 metallb:
   controller:
     enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+      limits:
+        memory: 100Mi
   speaker:
     enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+      limits:
+        memory: 100Mi
     frr:
       enabled: false
   prometheus:
     serviceMonitor:
       enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      speaker:
+        additionalLabels:
+          monitoring.instance: "{{ .name }}-{{ .stage }}"
+      controller:
+        additionalLabels:
+          monitoring.instance: "{{ .name }}-{{ .stage }}"
     prometheusRule:
       enabled: false

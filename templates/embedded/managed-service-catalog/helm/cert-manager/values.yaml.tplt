@@ -1,11 +1,31 @@
 cert-manager:
   installCRDs: true
   replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      memory: 100Mi
   prometheus:
     enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
     servicemonitor:
       enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      labels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   webhook:
     replicaCount: 1
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+      limits:
+        memory: 100Mi
   cainjector:
     replicaCount: 1
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+      limits:
+        memory: 100Mi

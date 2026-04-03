@@ -8,3 +8,13 @@ external-dns:
     - {{ .dnsName }}
   interval: "1m"
   logLevel: info
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      memory: 100Mi
+  serviceMonitor:
+    enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+    additionalLabels:
+      monitoring.instance: "{{ .name }}-{{ .stage }}"

@@ -24,6 +24,8 @@ loki:
   monitoring:
     serviceMonitor:
       enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      labels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
   chunksCache:
     enabled: false
   resultsCache:

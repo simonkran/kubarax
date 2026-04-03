@@ -2,7 +2,15 @@ metrics-server:
   replicas: 1
   args:
     - --kubelet-preferred-address-types=InternalIP
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+    limits:
+      memory: 100Mi
   apiService:
     create: true
   serviceMonitor:
     enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+    additionalLabels:
+      monitoring.instance: "{{ .name }}-{{ .stage }}"
