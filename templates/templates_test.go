@@ -33,7 +33,8 @@ func TestGetEmbeddedTemplatesListHelm(t *testing.T) {
 	assert.NotEmpty(t, paths)
 
 	for _, p := range paths {
-		assert.Contains(t, p, "/helm/", "helm filter should only return helm paths")
+		isHelm := contains(p, "/helm/") || strings.HasPrefix(p, "embedded/clusters/")
+		assert.True(t, isHelm, "helm filter should only return helm or cluster entry-point paths, got: %s", p)
 	}
 }
 

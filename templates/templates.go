@@ -51,7 +51,7 @@ func GetEmbeddedTemplatesList(templateType TemplateType) ([]string, error) {
 		// Filter by template type
 		switch templateType {
 		case TemplateTypeHelm:
-			if !strings.Contains(path, "/helm/") {
+			if !strings.Contains(path, "/helm/") && !strings.HasPrefix(path, "embedded/clusters/") {
 				return nil
 			}
 		case TemplateTypeTerraform:
