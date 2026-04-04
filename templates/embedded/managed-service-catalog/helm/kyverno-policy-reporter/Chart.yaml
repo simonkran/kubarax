@@ -1,0 +1,9 @@
+apiVersion: v2
+name: kyverno-policy-reporter
+description: Policy Reporter - monitoring and visualization for Kyverno policy results
+version: 0.1.0
+type: application
+dependencies:
+  - name: policy-reporter
+    version: "2.x"
+    repository: "https://kyverno.github.io/policy-reporter"

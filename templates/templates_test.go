@@ -16,10 +16,10 @@ func TestGetEmbeddedTemplatesListAll(t *testing.T) {
 	// Should contain both managed and customer catalog files
 	var hasManaged, hasCustomer bool
 	for _, p := range paths {
-		if contains(p, "managed-service-catalog") {
+		if strings.Contains(p, "managed-service-catalog") {
 			hasManaged = true
 		}
-		if contains(p, "customer-service-catalog") {
+		if strings.Contains(p, "customer-service-catalog") {
 			hasCustomer = true
 		}
 	}
@@ -33,7 +33,7 @@ func TestGetEmbeddedTemplatesListHelm(t *testing.T) {
 	assert.NotEmpty(t, paths)
 
 	for _, p := range paths {
-		isHelm := contains(p, "/helm/") || strings.HasPrefix(p, "embedded/clusters/")
+		isHelm := strings.Contains(p, "/helm/") || strings.HasPrefix(p, "embedded/clusters/")
 		assert.True(t, isHelm, "helm filter should only return helm or cluster entry-point paths, got: %s", p)
 	}
 }
@@ -137,7 +137,7 @@ func TestGitRepositoriesTemplateRendering(t *testing.T) {
 	// Find the gitrepositories output
 	var gitRepoContent string
 	for _, r := range results {
-		if contains(r.Path, "gitrepositories.yaml") {
+		if strings.Contains(r.Path, "gitrepositories.yaml") {
 			gitRepoContent = string(r.Content)
 			break
 		}
@@ -172,22 +172,10 @@ func TestGitRepositoriesTemplateEmpty(t *testing.T) {
 
 	// gitrepositories should be empty/whitespace-only (no gitRepositories in config)
 	for _, r := range results {
-		if contains(r.Path, "gitrepositories.yaml") {
+		if strings.Contains(r.Path, "gitrepositories.yaml") {
 			assert.Empty(t, strings.TrimSpace(string(r.Content)), "gitrepositories.yaml should be empty when no git repos configured")
 			break
 		}
 	}
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstring(s, substr))
-}
-
-func containsSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}

@@ -1,0 +1,3 @@
+kyverno-policies:
+  podSecurityStandard: baseline
+  validationFailureAction: Audit

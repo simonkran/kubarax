@@ -149,8 +149,7 @@ type Services struct {
 	OAuth2Proxy           GenericService     `yaml:"oauth2Proxy" json:"oauth2Proxy" jsonschema:"description=OAuth2 Proxy"`
 	Longhorn              GenericService     `yaml:"longhorn" json:"longhorn" jsonschema:"description=Longhorn storage"`
 	MetalLB               GenericService     `yaml:"metallb" json:"metallb" jsonschema:"description=MetalLB load balancer"`
-	FluxWebUI             GenericService     `yaml:"fluxWebUI" json:"fluxWebUI" jsonschema:"description=Flux Operator Web UI dashboard"`
-	HomeDashboard         GenericService     `yaml:"homeDashboard" json:"homeDashboard" jsonschema:"description=Home dashboard"`
+	HomerDashboard        GenericService     `yaml:"homerDashboard" json:"homerDashboard" jsonschema:"description=Homer dashboard"`
 	Forgejo               GenericService     `yaml:"forgejo" json:"forgejo" jsonschema:"description=Forgejo Git service"`
 }
 

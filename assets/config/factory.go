@@ -52,8 +52,7 @@ func DefaultServices() Services {
 		OAuth2Proxy:           GenericService{Status: ServiceDisabled},
 		Longhorn:              GenericService{Status: ServiceDisabled},
 		MetalLB:               GenericService{Status: ServiceDisabled},
-		FluxWebUI:             GenericService{Status: ServiceEnabled},
-		HomeDashboard:         GenericService{Status: ServiceEnabled},
+		HomerDashboard:         GenericService{Status: ServiceEnabled},
 		Forgejo:               GenericService{Status: ServiceDisabled},
 	}
 }

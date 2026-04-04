@@ -61,9 +61,7 @@ func TestConfigManagerLoadAndValidate(t *testing.T) {
         status: disabled
       metallb:
         status: disabled
-      fluxWebUI:
-        status: enabled
-      homeDashboard:
+      homerDashboard:
         status: enabled
       forgejo:
         status: disabled
@@ -100,7 +98,7 @@ func TestConfigManagerLoadAndValidate(t *testing.T) {
 	assert.Equal(t, ServiceEnabled, cluster.Services.Traefik.Status)
 	assert.Equal(t, ServiceEnabled, cluster.Services.CertManager.Status)
 	assert.Equal(t, ServiceDisabled, cluster.Services.Kyverno.Status)
-	assert.Equal(t, ServiceEnabled, cluster.Services.FluxWebUI.Status)
+
 	assert.Equal(t, ServiceDisabled, cluster.Services.Forgejo.Status)
 }
 
@@ -209,9 +207,7 @@ func TestConfigWithGitRepositories(t *testing.T) {
         status: disabled
       metallb:
         status: disabled
-      fluxWebUI:
-        status: enabled
-      homeDashboard:
+      homerDashboard:
         status: enabled
       forgejo:
         status: disabled
@@ -286,9 +282,7 @@ func TestConfigWithApplications(t *testing.T) {
         status: disabled
       metallb:
         status: disabled
-      fluxWebUI:
-        status: enabled
-      homeDashboard:
+      homerDashboard:
         status: enabled
       forgejo:
         status: disabled
@@ -382,7 +376,6 @@ func TestDefaultServices(t *testing.T) {
 	assert.Equal(t, ServiceDisabled, services.OAuth2Proxy.Status)
 	assert.Equal(t, ServiceDisabled, services.Longhorn.Status)
 	assert.Equal(t, ServiceDisabled, services.MetalLB.Status)
-	assert.Equal(t, ServiceEnabled, services.FluxWebUI.Status)
-	assert.Equal(t, ServiceEnabled, services.HomeDashboard.Status)
+	assert.Equal(t, ServiceEnabled, services.HomerDashboard.Status)
 	assert.Equal(t, ServiceDisabled, services.Forgejo.Status)
 }

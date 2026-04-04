@@ -1,0 +1,9 @@
+apiVersion: v2
+name: kyverno-policies
+description: Kyverno Policies - default security and best practice policies
+version: 0.1.0
+type: application
+dependencies:
+  - name: kyverno-policies
+    version: "3.7.x"
+    repository: "https://kyverno.github.io/kyverno"

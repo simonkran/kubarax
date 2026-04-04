@@ -1,0 +1,21 @@
+policy-reporter:
+  ui:
+    enabled: true
+    ingress:
+      enabled: true
+      className: {{ .ingressClassName | default "traefik" }}
+      hosts:
+        - host: policy-reporter.{{ .dnsName }}
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: policy-reporter-tls
+          hosts:
+            - policy-reporter.{{ .dnsName }}
+  metrics:
+    enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+    serviceMonitor:
+      enabled: {{ if eq (index .services "kubePrometheusStack").status "enabled" }}true{{ else }}false{{ end }}
+      additionalLabels:
+        monitoring.instance: "{{ .name }}-{{ .stage }}"
