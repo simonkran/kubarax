@@ -43,6 +43,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: {{ .interval | default "10m" }}
+  releaseName: app-{{ .name }}
   chart:
     spec:
       {{- if eq .sourceRef.kind "HelmRepository" }}

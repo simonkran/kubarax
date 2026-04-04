@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
+  releaseName: oauth2-proxy
   chart:
     spec:
       chart: ./managed-service-catalog/helm/oauth2-proxy

@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
+  releaseName: metrics-server
   chart:
     spec:
       chart: ./managed-service-catalog/helm/metrics-server

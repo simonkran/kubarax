@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
+  releaseName: kube-prometheus-stack
   chart:
     spec:
       chart: ./managed-service-catalog/helm/kube-prometheus-stack

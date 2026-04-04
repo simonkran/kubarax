@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
+  releaseName: metallb
   chart:
     spec:
       chart: ./managed-service-catalog/helm/metallb
