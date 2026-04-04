@@ -1,4 +1,4 @@
-{{- if eq .type "controlplane" }}
+{{- if .workerClusters }}
 # ResourceSet for deploying platform components to worker clusters
 # This ResourceSet uses inputs from config.yaml workerClusters to deploy
 # the platform stack to each worker cluster.
@@ -15,7 +15,6 @@ metadata:
   namespace: flux-system
 spec:
   inputs:
-{{- if .workerClusters }}
 {{- range .workerClusters }}
     - id: {{ .name }}
       cluster: {{ .name }}
@@ -40,9 +39,6 @@ spec:
       kubeConfig:
         secretRef:
           name: << inputs.kubeconfigSecret >>
-{{- else }}
-    []
-{{- end }}
   dependsOn:
     - apiVersion: fluxcd.controlplane.io/v1
       kind: FluxInstance
