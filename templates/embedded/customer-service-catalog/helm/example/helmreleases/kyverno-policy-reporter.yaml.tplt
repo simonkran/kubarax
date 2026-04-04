@@ -1,19 +1,19 @@
-{{- if eq (index .services "homerDashboard").status "enabled" }}
+{{- if eq (index .services "kyvernoPolicyReporter").status "enabled" }}
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: homer-dashboard
+  name: kyverno-policy-reporter
   namespace: flux-system
 spec:
   interval: 10m
   chart:
     spec:
-      chart: ./managed-service-catalog/helm/homer-dashboard
+      chart: ./managed-service-catalog/helm/kyverno-policy-reporter
       sourceRef:
         kind: GitRepository
         name: flux-system
       interval: 5m
-  targetNamespace: homer
+  targetNamespace: policy-reporter
   install:
     createNamespace: true
     remediation:
@@ -22,7 +22,6 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: cert-manager
-    - name: traefik
+    - name: kyverno
   values: {}
 {{- end }}

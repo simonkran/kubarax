@@ -65,9 +65,7 @@ clusters:
         status: disabled
       metallb:
         status: disabled
-      fluxWebUI:
-        status: disabled
-      homeDashboard:
+      homerDashboard:
         status: enabled
       forgejo:
         status: disabled

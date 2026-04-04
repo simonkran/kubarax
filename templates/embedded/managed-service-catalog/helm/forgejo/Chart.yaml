@@ -1,0 +1,9 @@
+apiVersion: v2
+name: forgejo
+description: Forgejo - self-hosted Git service
+version: 0.1.0
+type: application
+dependencies:
+  - name: forgejo
+    version: "12.x"
+    repository: "https://codeberg.org/forgejo-contrib/forgejo-helm/raw/branch/main"

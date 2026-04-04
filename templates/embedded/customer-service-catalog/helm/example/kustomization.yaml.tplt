@@ -47,8 +47,17 @@ resources:
 {{- if eq (index .services "metallb").status "enabled" }}
   - helmreleases/metallb.yaml
 {{- end }}
-{{- if eq (index .services "homeDashboard").status "enabled" }}
+{{- if eq (index .services "homerDashboard").status "enabled" }}
   - helmreleases/homer-dashboard.yaml
+{{- end }}
+{{- if eq (index .services "kyvernoPolicies").status "enabled" }}
+  - helmreleases/kyverno-policies.yaml
+{{- end }}
+{{- if eq (index .services "kyvernoPolicyReporter").status "enabled" }}
+  - helmreleases/kyverno-policy-reporter.yaml
+{{- end }}
+{{- if eq (index .services "forgejo").status "enabled" }}
+  - helmreleases/forgejo.yaml
 {{- end }}
 {{- if .projects }}
   # Tenant projects

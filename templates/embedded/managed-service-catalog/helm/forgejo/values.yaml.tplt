@@ -1,0 +1,16 @@
+forgejo:
+  ingress:
+    enabled: true
+    className: {{ .ingressClassName | default "traefik" }}
+    hosts:
+      - host: forgejo.{{ .dnsName }}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: forgejo-tls
+        hosts:
+          - forgejo.{{ .dnsName }}
+  persistence:
+    enabled: true
+    size: 10Gi
