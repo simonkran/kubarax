@@ -12,21 +12,10 @@ func NewClusterFromEnv(env *envmap.EnvMap) Cluster {
 		Type:    "controlplane",
 		DNSName: env.DomainName,
 		FluxCD: FluxConfig{
-			Distribution: FluxDistribution{
-				Version:  "2.x",
-				Registry: "ghcr.io/fluxcd",
-			},
-			Cluster: FluxCluster{
-				Type:          "kubernetes",
-				Size:          "medium",
-				NetworkPolicy: true,
-			},
 			Sync: FluxSync{
-				Kind:     "GitRepository",
-				URL:      env.FluxGitHTTPSUrl,
-				Ref:      "refs/heads/main",
-				Path:     "clusters/" + env.ProjectName,
-				Interval: "5m",
+				URL:  env.FluxGitHTTPSUrl,
+				Ref:  "refs/heads/main",
+				Path: "clusters/" + env.ProjectName,
 			},
 			WebUI: FluxWebUI{
 				Enabled: true,

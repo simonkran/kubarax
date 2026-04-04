@@ -80,7 +80,7 @@ type DNS struct {
 
 // FluxConfig holds FluxCD Operator-specific configuration
 type FluxConfig struct {
-	Distribution     FluxDistribution `yaml:"distribution" json:"distribution" jsonschema:"required,description=Flux distribution configuration"`
+	Distribution     FluxDistribution `yaml:"distribution,omitempty" json:"distribution,omitempty" jsonschema:"description=Flux distribution configuration"`
 	Cluster          FluxCluster      `yaml:"cluster,omitempty" json:"cluster,omitempty" jsonschema:"description=Cluster profile configuration"`
 	Sync             FluxSync         `yaml:"sync" json:"sync" jsonschema:"required,description=Flux sync configuration (GitRepository + Kustomization)"`
 	HelmRepositories []HelmRepoConfig `yaml:"helmRepositories,omitempty" json:"helmRepositories,omitempty" jsonschema:"description=Additional Helm repositories"`
