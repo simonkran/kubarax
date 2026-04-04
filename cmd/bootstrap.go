@@ -191,11 +191,13 @@ func (flags *BootstrapFlags) AddFlags(cmd *cli.Command) {
 		},
 		&cli.BoolFlag{
 			Name:        "with-es-crds",
+			Value:       true,
 			Usage:       "Also install external-secrets CRDs",
 			Destination: &flags.WithES,
 		},
 		&cli.BoolFlag{
 			Name:        "with-prometheus-crds",
+			Value:       true,
 			Usage:       "Also install kube-prometheus-stack CRDs",
 			Destination: &flags.WithProm,
 		},
