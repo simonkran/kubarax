@@ -92,7 +92,9 @@ func Bootstrap(ctx context.Context, opts *Options) error {
 	}
 
 	// Step 5: Refresh discovery so FluxInstance CRD is available
-	_ = client.RefreshDiscovery()
+	if err := client.RefreshDiscovery(); err != nil {
+		log.Warn().Err(err).Msg("Failed to refresh API discovery, continuing...")
+	}
 
 	// Step 6: Create the FluxInstance CR (this triggers Flux controller installation + sync)
 	if err := applyFluxInstance(ctx, client, opts); err != nil {
@@ -111,7 +113,9 @@ func Bootstrap(ctx context.Context, opts *Options) error {
 
 	// Step 9: Apply ClusterSecretStore if provided (requires external-secrets CRDs from Step 8)
 	if opts.WithESCSSPath != "" {
-		_ = client.RefreshDiscovery()
+		if err := client.RefreshDiscovery(); err != nil {
+			log.Warn().Err(err).Msg("Failed to refresh API discovery, continuing...")
+		}
 		if err := applyClusterSecretStore(ctx, client, opts); err != nil {
 			return fmt.Errorf("applying ClusterSecretStore: %w", err)
 		}
@@ -481,10 +485,9 @@ func printCompletionMessage(opts *Options) {
 		return
 	}
 
-	cfg := CompletionLogConfig{
-		WebUIEnabled: opts.ClusterConfig.FluxCD.WebUI.Enabled,
-	}
+	cfg := CompletionLogConfig{}
 	if opts.ClusterConfig != nil {
+		cfg.WebUIEnabled = opts.ClusterConfig.FluxCD.WebUI.Enabled
 		cfg.ClusterDNSName = opts.ClusterConfig.DNSName
 	}
 

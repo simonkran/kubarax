@@ -11,12 +11,12 @@ import (
 
 func TestEnvMapValidateRequiredFields(t *testing.T) {
 	em := &EnvMap{
-		ProjectName:      "test",
-		ProjectStage:     "dev",
-		FluxGitHTTPSUrl:  "https://github.com/org/repo",
-		FluxGitUsername:   "git",
+		ProjectName:          "test",
+		ProjectStage:         "dev",
+		FluxGitHTTPSUrl:      "https://github.com/org/repo",
+		FluxGitUsername:      "git",
 		FluxGitPatOrPassword: "token123",
-		DomainName:       "example.com",
+		DomainName:           "example.com",
 	}
 
 	err := em.Validate()
@@ -25,12 +25,12 @@ func TestEnvMapValidateRequiredFields(t *testing.T) {
 
 func TestEnvMapValidateFailsOnPlaceholder(t *testing.T) {
 	em := &EnvMap{
-		ProjectName:      "<...>",
-		ProjectStage:     "dev",
-		FluxGitHTTPSUrl:  "https://github.com/org/repo",
-		FluxGitUsername:   "git",
+		ProjectName:          "<...>",
+		ProjectStage:         "dev",
+		FluxGitHTTPSUrl:      "https://github.com/org/repo",
+		FluxGitUsername:      "git",
 		FluxGitPatOrPassword: "token",
-		DomainName:       "example.com",
+		DomainName:           "example.com",
 	}
 
 	err := em.Validate()

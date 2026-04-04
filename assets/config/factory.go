@@ -39,22 +39,22 @@ func NewClusterFromEnv(env *envmap.EnvMap) Cluster {
 // DefaultServices returns a Services config with sensible defaults
 func DefaultServices() Services {
 	return Services{
-		Traefik:             GenericService{Status: ServiceEnabled},
-		CertManager:         CertManagerService{Status: ServiceEnabled},
-		ExternalDNS:         GenericService{Status: ServiceEnabled},
-		ExternalSecrets:     GenericService{Status: ServiceEnabled},
-		KubePrometheusStack: GenericService{Status: ServiceEnabled},
-		Loki:                GenericService{Status: ServiceEnabled},
-		MetricsServer:       GenericService{Status: ServiceEnabled},
-		Kyverno:             GenericService{Status: ServiceDisabled},
-		KyvernoPolicies:     GenericService{Status: ServiceDisabled},
+		Traefik:               GenericService{Status: ServiceEnabled},
+		CertManager:           CertManagerService{Status: ServiceEnabled},
+		ExternalDNS:           GenericService{Status: ServiceEnabled},
+		ExternalSecrets:       GenericService{Status: ServiceEnabled},
+		KubePrometheusStack:   GenericService{Status: ServiceEnabled},
+		Loki:                  GenericService{Status: ServiceEnabled},
+		MetricsServer:         GenericService{Status: ServiceEnabled},
+		Kyverno:               GenericService{Status: ServiceDisabled},
+		KyvernoPolicies:       GenericService{Status: ServiceDisabled},
 		KyvernoPolicyReporter: GenericService{Status: ServiceDisabled},
-		OAuth2Proxy:         GenericService{Status: ServiceDisabled},
-		Longhorn:            GenericService{Status: ServiceDisabled},
-		MetalLB:             GenericService{Status: ServiceDisabled},
-		FluxWebUI:           GenericService{Status: ServiceEnabled},
-		HomeDashboard:       GenericService{Status: ServiceEnabled},
-		Forgejo:             GenericService{Status: ServiceDisabled},
+		OAuth2Proxy:           GenericService{Status: ServiceDisabled},
+		Longhorn:              GenericService{Status: ServiceDisabled},
+		MetalLB:               GenericService{Status: ServiceDisabled},
+		FluxWebUI:             GenericService{Status: ServiceEnabled},
+		HomeDashboard:         GenericService{Status: ServiceEnabled},
+		Forgejo:               GenericService{Status: ServiceDisabled},
 	}
 }
 

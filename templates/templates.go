@@ -21,7 +21,7 @@ var embeddedFS embed.FS
 type TemplateType int
 
 const (
-	TemplateTypeAll       TemplateType = iota
+	TemplateTypeAll TemplateType = iota
 	TemplateTypeHelm
 	TemplateTypeTerraform
 )

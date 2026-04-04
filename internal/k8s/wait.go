@@ -6,7 +6,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/rs/zerolog/log"
 )
@@ -61,9 +60,13 @@ func (c *Client) WaitForDeployment(ctx context.Context, namespace, name string) 
 				continue
 			}
 
-			if deploy.Status.ReadyReplicas >= *deploy.Spec.Replicas {
+			replicas := int32(1)
+			if deploy.Spec.Replicas != nil {
+				replicas = *deploy.Spec.Replicas
+			}
+			if deploy.Status.ReadyReplicas >= replicas {
 				log.Info().Msgf("Deployment %s/%s is ready (%d/%d replicas)",
-					namespace, name, deploy.Status.ReadyReplicas, *deploy.Spec.Replicas)
+					namespace, name, deploy.Status.ReadyReplicas, replicas)
 				return nil
 			}
 		}
@@ -73,12 +76,6 @@ func (c *Client) WaitForDeployment(ctx context.Context, namespace, name string) 
 // WaitForCRD waits for a CRD to be established
 func (c *Client) WaitForCRD(ctx context.Context, name string) error {
 	log.Info().Msgf("Waiting for CRD %s to be established", name)
-
-	// Parse the label selector (not actually used for CRD wait, but validates syntax)
-	_, err := labels.Parse("")
-	if err != nil {
-		return fmt.Errorf("invalid label selector: %w", err)
-	}
 
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()

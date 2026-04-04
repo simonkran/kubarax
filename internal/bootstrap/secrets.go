@@ -3,11 +3,21 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"kubarax/internal/k8s"
 
 	"github.com/rs/zerolog/log"
 )
+
+// yamlQuote wraps a string in double quotes and escapes characters that could
+// break YAML parsing (backslashes, double quotes, newlines).
+func yamlQuote(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	s = strings.ReplaceAll(s, "\n", `\n`)
+	return fmt.Sprintf(`"%s"`, s)
+}
 
 // SecretManager handles creating bootstrap secrets
 type SecretManager struct {
@@ -35,7 +45,7 @@ type: Opaque
 stringData:
   username: %s
   password: %s
-`, opts.EnvMap.FluxGitUsername, opts.EnvMap.FluxGitPatOrPassword)
+`, yamlQuote(opts.EnvMap.FluxGitUsername), yamlQuote(opts.EnvMap.FluxGitPatOrPassword))
 
 	applyOpts := k8s.DefaultApplyOptions()
 	applyOpts.FieldManager = "kubarax-bootstrap-secrets"
@@ -96,7 +106,7 @@ type: Opaque
 stringData:
   username: %s
   password: %s
-`, opts.EnvMap.HelmRepoUsername, opts.EnvMap.HelmRepoPassword)
+`, yamlQuote(opts.EnvMap.HelmRepoUsername), yamlQuote(opts.EnvMap.HelmRepoPassword))
 
 	applyOpts := k8s.DefaultApplyOptions()
 	applyOpts.FieldManager = "kubarax-bootstrap-secrets"
