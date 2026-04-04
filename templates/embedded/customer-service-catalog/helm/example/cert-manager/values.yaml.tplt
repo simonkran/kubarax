@@ -17,8 +17,8 @@ externalSecrets:
     data:
       - secretKey: apiKey
         remoteRef:
-          key: cert-manager
-          property: cloudflare_api_token
+          key: apiKey
+          property: cloudflare-api-token
 {{- else if eq $ci.solver "route53" }}
   route53-credentials:
     secretStoreRef:

@@ -8,5 +8,5 @@ externalSecrets:
     data:
       - secretKey: apiKey
         remoteRef:
-          key: cloudflare
-          property: api_token
+          key: apiKey
+          property: cloudflare-api-token

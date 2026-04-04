@@ -24,10 +24,10 @@ The default ClusterSecretStore name convention used in the generated templates i
 
 | Service | Condition | Key | Property | Description |
 |---------|-----------|-----|----------|-------------|
-| cert-manager | solver = `cloudflare` | `cert-manager` | `cloudflare_api_token` | Cloudflare API token for DNS-01 challenge |
+| cert-manager | solver = `cloudflare` | `apiKey` | `cloudflare-api-token` | Cloudflare API token for DNS-01 challenge |
 | cert-manager | solver = `route53` | `cert-manager` | `access_key_id` | AWS access key for Route53 DNS-01 challenge |
 | cert-manager | solver = `route53` | `cert-manager` | `secret_access_key` | AWS secret key for Route53 DNS-01 challenge |
-| external-dns | default template uses Cloudflare | `cloudflare` | `api_token` | Cloudflare API token for DNS record management |
+| external-dns | default template uses Cloudflare | `apiKey` | `cloudflare-api-token` | Cloudflare API token for DNS record management |
 | oauth2-proxy | SSO enabled | `oauth2-proxy` | `client-id` | OIDC client ID |
 | oauth2-proxy | SSO enabled | `oauth2-proxy` | `client-secret` | OIDC client secret |
 | oauth2-proxy | SSO enabled | `oauth2-proxy` | `cookie-secret` | Random 32-byte base64 cookie encryption key |
@@ -50,7 +50,7 @@ If using [1Password Connect](https://developer.1password.com/docs/connect/) as y
 
 | 1Password Vault | Item Name | Field | Example Value |
 |-----------------|-----------|-------|---------------|
-| `kubarax` | `cert-manager` | `cloudflare_api_token` | `cf-token-...` |
+| `kubarax` | `cert-manager` | `cloudflare-api-token` | `cf-token-...` |
 | `kubarax` | `cloudflare` | `api_token` | `cf-token-...` |
 | `kubarax` | `oauth2-proxy` | `client-id` | `abc123` |
 | `kubarax` | `oauth2-proxy` | `client-secret` | `secret-...` |
@@ -61,7 +61,7 @@ If using [1Password Connect](https://developer.1password.com/docs/connect/) as y
 ### Example: HashiCorp Vault
 
 ```bash
-vault kv put secret/cert-manager cloudflare_api_token="cf-token-..."
+vault kv put secret/cert-manager cloudflare-api-token="cf-token-..."
 vault kv put secret/cloudflare api_token="cf-token-..."
 vault kv put secret/oauth2-proxy client-id="abc123" client-secret="..." cookie-secret="$(openssl rand -base64 32)"
 vault kv put secret/grafana client-id="abc123" client-secret="..."
