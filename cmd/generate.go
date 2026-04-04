@@ -191,6 +191,9 @@ func (o *GenerateOptions) processClusters() ([]templates.TemplateResult, []strin
 		return nil, nil, fmt.Errorf("validating config: %w", err)
 	}
 
+	// Merge env overrides into config (e.g. vault name from KUBARAX_ESS_VAULT_NAME)
+	config.CreateOrUpdateClusterFromEnv(cm.GetConfig(), em.GetConfig())
+
 	var allResults []templates.TemplateResult
 	var clusterNames []string
 
