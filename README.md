@@ -149,20 +149,10 @@ clusters:
     type: controlplane
     dnsName: platform.example.com
     fluxcd:
-      distribution:
-        version: "2.x"
-        registry: ghcr.io/fluxcd
-      cluster:
-        type: kubernetes
-        size: medium            # small|medium|large resource profiles
-        networkPolicy: true
-        multitenant: false
       sync:
-        kind: GitRepository
         url: https://github.com/org/platform-repo
         ref: refs/heads/main
         path: clusters/my-platform
-        interval: 5m
       webUI:
         enabled: true
     services:

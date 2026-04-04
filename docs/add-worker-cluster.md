@@ -26,18 +26,10 @@ clusters:
     dnsName: worker-0.platform.example.com
     ingressClassName: traefik
     fluxcd:
-      distribution:
-        version: "2.x"
-        registry: ghcr.io/fluxcd
-      cluster:
-        type: kubernetes
-        size: small
       sync:
-        kind: GitRepository
         url: https://github.com/org/platform-repo
         ref: refs/heads/main
         path: clusters/worker-0
-        interval: 5m
     services:
       traefik:
         status: enabled

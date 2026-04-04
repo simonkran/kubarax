@@ -126,10 +126,10 @@ To limit which Git repositories a tenant can deploy from, use the Flux Operator'
 # Enable multi-tenancy in config.yaml
 fluxcd:
   cluster:
-    multitenant: true
+    multitenant: true  # defaults to false
 ```
 
-With multi-tenancy enabled, each tenant's `Kustomization` and `HelmRelease` resources can only reference sources within their own namespace.
+With multi-tenancy enabled, each tenant's `Kustomization` and `HelmRelease` resources can only reference sources within their own namespace. Other `fluxcd.cluster` fields (`type`, `size`, `networkPolicy`) have sensible defaults and can be overridden here as well.
 
 ### Step 4: Add Kyverno Policies (Optional)
 
