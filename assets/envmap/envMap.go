@@ -23,6 +23,11 @@ type EnvMap struct {
 	HelmRepoUsername string `env:"HELM_REPO_USERNAME" default:"" yaml:"HELM_REPO_USERNAME"`
 	HelmRepoPassword string `env:"HELM_REPO_PASSWORD" default:"" yaml:"HELM_REPO_PASSWORD"`
 	HelmRepoURL      string `env:"HELM_REPO_URL" default:"" yaml:"HELM_REPO_URL"`
+
+	// Optional External Secrets Store authentication
+	ESSSecretName string `env:"ESS_SECRET_NAME" default:"" yaml:"ESS_SECRET_NAME"`
+	ESSTokenKey   string `env:"ESS_TOKEN_KEY" default:"" yaml:"ESS_TOKEN_KEY"`
+	ESSToken      string `env:"ESS_TOKEN" default:"" yaml:"ESS_TOKEN"`
 }
 
 // ErrorEnvMap is a custom error type for environment validation
@@ -123,6 +128,12 @@ KUBARAX_DOMAIN_NAME=<...>
 # KUBARAX_HELM_REPO_USERNAME=
 # KUBARAX_HELM_REPO_PASSWORD=
 # KUBARAX_HELM_REPO_URL=
+
+# Optional: External Secrets Store authentication secret
+# Creates a Kubernetes Secret in the external-secrets namespace for ClusterSecretStore auth
+# KUBARAX_ESS_SECRET_NAME=eso-auth
+# KUBARAX_ESS_TOKEN_KEY=token
+# KUBARAX_ESS_TOKEN=
 `
 	return []byte(example), nil
 }

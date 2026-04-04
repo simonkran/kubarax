@@ -13,6 +13,7 @@ services:
 ```
 
 - A secret backend (Vault, AWS Secrets Manager, GCP Secret Manager, 1Password, etc.)
+- If your provider requires a Kubernetes Secret for authentication (e.g., 1Password service account token), configure it via `.env` — see [Authentication Secret](#authentication-secret) below
 
 ## Secrets to Pre-Create in Your Secret Manager
 
@@ -68,6 +69,31 @@ vault kv put secret/grafana client-id="abc123" client-secret="..."
 ```
 
 > **Note**: The **key** column maps to the secret path or item name in your provider. The **property** column maps to the field or attribute within that secret. Adjust path prefixes to match your ClusterSecretStore provider configuration.
+
+## Authentication Secret
+
+If your ClusterSecretStore provider requires a Kubernetes Secret for authentication (e.g., a 1Password service account token or Vault token), kubarax can create it automatically during bootstrap. Add these to your `.env` file:
+
+```bash
+KUBARAX_ESS_TOKEN=ops_your-service-account-token
+# Optional: customize secret name and key (defaults shown)
+KUBARAX_ESS_SECRET_NAME=eso-auth
+KUBARAX_ESS_TOKEN_KEY=token
+```
+
+This creates an Opaque secret in the `external-secrets` namespace before the ClusterSecretStore is applied. Reference it in your ClusterSecretStore manifest:
+
+```yaml
+spec:
+  provider:
+    onepassword:
+      auth:
+        secretRef:
+          name: eso-auth
+          key: token
+```
+
+If `KUBARAX_ESS_TOKEN` is not set, no secret is created.
 
 ## Setting Up a ClusterSecretStore
 

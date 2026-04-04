@@ -118,3 +118,45 @@ stringData:
 	log.Info().Msg("Created helm-repo-credentials secret")
 	return nil
 }
+
+// CreateESOAuthSecret creates the authentication secret for the ClusterSecretStore
+func (sm *SecretManager) CreateESOAuthSecret(ctx context.Context, opts *Options) error {
+	if opts.EnvMap.ESSToken == "" {
+		return nil
+	}
+
+	secretName := opts.EnvMap.ESSSecretName
+	if secretName == "" {
+		secretName = "eso-auth"
+	}
+
+	tokenKey := opts.EnvMap.ESSTokenKey
+	if tokenKey == "" {
+		tokenKey = "token"
+	}
+
+	if opts.DryRun {
+		log.Info().Msgf("[DRY-RUN] Would create %s secret in external-secrets namespace", secretName)
+		return nil
+	}
+
+	manifest := fmt.Sprintf(`apiVersion: v1
+kind: Secret
+metadata:
+  name: %s
+  namespace: external-secrets
+type: Opaque
+stringData:
+  %s: %s
+`, secretName, tokenKey, yamlQuote(opts.EnvMap.ESSToken))
+
+	applyOpts := k8s.DefaultApplyOptions()
+	applyOpts.FieldManager = "kubarax-bootstrap-secrets"
+
+	if err := sm.client.ApplyManifest(ctx, []byte(manifest), applyOpts); err != nil {
+		return fmt.Errorf("applying ESO auth secret: %w", err)
+	}
+
+	log.Info().Msgf("Created %s secret in external-secrets namespace", secretName)
+	return nil
+}

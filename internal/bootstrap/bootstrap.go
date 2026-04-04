@@ -111,6 +111,17 @@ func Bootstrap(ctx context.Context, opts *Options) error {
 		return fmt.Errorf("installing additional charts: %w", err)
 	}
 
+	// Step 8.5: Create ESO auth secret if configured (must exist before ClusterSecretStore)
+	if envmap.IsConfiguredEnvValue(opts.EnvMap.ESSToken) {
+		if err := client.EnsureNamespace(ctx, externalSecretsNamespace, opts.DryRun); err != nil {
+			return fmt.Errorf("ensuring external-secrets namespace: %w", err)
+		}
+		sm := NewSecretManager(client)
+		if err := sm.CreateESOAuthSecret(ctx, opts); err != nil {
+			return fmt.Errorf("creating ESO auth secret: %w", err)
+		}
+	}
+
 	// Step 9: Apply ClusterSecretStore if provided (requires external-secrets CRDs from Step 8)
 	if opts.WithESCSSPath != "" {
 		if err := client.RefreshDiscovery(); err != nil {
