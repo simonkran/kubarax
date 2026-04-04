@@ -1,6 +1,6 @@
 # Add External Secrets & ClusterSecretStore
 
-This guide covers how to set up the External Secrets Operator and configure a `ClusterSecretStore` to sync secrets from an external provider (Vault, AWS Secrets Manager, etc.) into your Kubernetes clusters.
+This guide covers how to set up the External Secrets Operator and configure a `ClusterSecretStore` to sync secrets from 1Password (via the 1Password SDK provider) into your Kubernetes clusters.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ services:
     status: enabled
 ```
 
-- A secret backend (Vault, AWS Secrets Manager, GCP Secret Manager, 1Password, etc.)
+- A 1Password account with a [service account token](https://developer.1password.com/docs/service-accounts/)
 - If your provider requires a Kubernetes Secret for authentication (e.g., 1Password service account token), configure it via `.env` — see [Authentication Secret](#authentication-secret) below
 
 ## Secrets to Pre-Create in Your Secret Manager
@@ -20,6 +20,8 @@ services:
 The generated ExternalSecret manifests expect certain entries to already exist in your secret backend **before** the corresponding platform services can reconcile. You only need to create secrets for services you have enabled in `config.yaml`.
 
 The default ClusterSecretStore name convention used in the generated templates is `{cluster-name}-{stage}` (e.g. `my-platform-prod`).
+
+The 1Password vault name is configured on the ClusterSecretStore via the `vault` field in the `onepasswordSDK` provider spec. The **Key** column in the tables below maps to the item name in that vault.
 
 ### Core Platform Secrets
 
@@ -45,9 +47,9 @@ These are only needed if you add worker clusters or additional Git repositories:
 | Git repository credentials | `git/{repo-name}` | `username` | Git username |
 | Git repository credentials | `git/{repo-name}` | `pat` | Git personal access token |
 
-### Example: 1Password
+### Example: 1Password SDK
 
-If using [1Password Connect](https://developer.1password.com/docs/connect/) as your External Secrets provider, create items in your vault matching the key/property pairs above:
+Create items in your 1Password vault matching the key/property pairs above:
 
 | 1Password Vault | Item Name | Field | Example Value |
 |-----------------|-----------|-------|---------------|
@@ -59,20 +61,11 @@ If using [1Password Connect](https://developer.1password.com/docs/connect/) as y
 | `kubarax` | `grafana` | `client-id` | `abc123` |
 | `kubarax` | `grafana` | `client-secret` | `secret-...` |
 
-### Example: HashiCorp Vault
-
-```bash
-vault kv put secret/cert-manager cloudflare-api-token="cf-token-..."
-vault kv put secret/cloudflare api_token="cf-token-..."
-vault kv put secret/oauth2-proxy client-id="abc123" client-secret="..." cookie-secret="$(openssl rand -base64 32)"
-vault kv put secret/grafana client-id="abc123" client-secret="..."
-```
-
-> **Note**: The **key** column maps to the secret path or item name in your provider. The **property** column maps to the field or attribute within that secret. Adjust path prefixes to match your ClusterSecretStore provider configuration.
+> **Note**: The **key** column maps to the item name in your 1Password vault. The **property** column maps to the field within that item. The vault itself is configured on the ClusterSecretStore, so `remoteRef.key` in ExternalSecrets only needs the item name.
 
 ## Authentication Secret
 
-If your ClusterSecretStore provider requires a Kubernetes Secret for authentication (e.g., a 1Password service account token or Vault token), kubarax can create it automatically during bootstrap. Add these to your `.env` file:
+The 1Password SDK provider requires a Kubernetes Secret containing your service account token. Kubarax creates it automatically during bootstrap. Add this to your `.env` file:
 
 ```bash
 KUBARAX_ESS_TOKEN=ops_your-service-account-token
@@ -86,11 +79,13 @@ This creates an Opaque secret in the `external-secrets` namespace before the Clu
 ```yaml
 spec:
   provider:
-    onepassword:
+    onepasswordSDK:
+      vault: my-vault
       auth:
-        secretRef:
+        serviceAccountSecretRef:
           name: eso-auth
           key: token
+          namespace: external-secrets
 ```
 
 If `KUBARAX_ESS_TOKEN` is not set, no secret is created.
@@ -109,16 +104,16 @@ Create a manifest file:
 apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
-  name: {{ .name }}-vault
+  name: {{ .name }}-{{ .stage }}
 spec:
   provider:
-    vault:
-      server: "https://vault.example.com"
-      path: "secret"
+    onepasswordSDK:
+      vault: {{ .name }}-{{ .stage }}
       auth:
-        kubernetes:
-          mountPath: "kubernetes"
-          role: "{{ .name }}-external-secrets"
+        serviceAccountSecretRef:
+          name: eso-auth
+          key: token
+          namespace: external-secrets
 ```
 
 Then bootstrap with:
@@ -141,26 +136,16 @@ Add your ClusterSecretStore configuration:
 
 ```yaml
 clusterSecretStores:
-  controlplane-vault:
+  controlplane-1password:
     provider:
-      vault:
-        server: "https://vault.example.com"
-        path: "secret"
+      onepasswordSDK:
+        vault: my-vault
         auth:
-          kubernetes:
-            mountPath: "kubernetes"
-            role: "external-secrets"
+          serviceAccountSecretRef:
+            name: eso-auth
+            key: token
+            namespace: external-secrets
     refreshInterval: 30
-
-  aws-secrets:
-    provider:
-      aws:
-        service: SecretsManager
-        region: eu-central-1
-        auth:
-          jwt:
-            serviceAccountRef:
-              name: external-secrets-sa
 ```
 
 Each key under `clusterSecretStores` becomes a `ClusterSecretStore` resource managed by FluxCD. Changes are automatically reconciled.
@@ -179,17 +164,17 @@ spec:
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore
-    name: controlplane-vault
+    name: controlplane-1password
   target:
     name: my-app-credentials
   data:
     - secretKey: username
       remoteRef:
-        key: apps/my-app
+        key: my-app
         property: username
     - secretKey: password
       remoteRef:
-        key: apps/my-app
+        key: my-app
         property: password
 ```
 
