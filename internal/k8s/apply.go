@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +74,22 @@ func (c *Client) applyObject(ctx context.Context, obj *unstructured.Unstructured
 
 	mapping, err := c.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
-		return fmt.Errorf("finding REST mapping for %v: %w", gvk, err)
+		// CRDs applied earlier in the same manifest may not be established yet.
+		// Wait for the API server to register the resource, then retry.
+		log.Debug().Msgf("REST mapping not found for %v, waiting for CRD to be established...", gvk)
+		for i := 0; i < 15; i++ {
+			time.Sleep(2 * time.Second)
+			if refreshErr := c.RefreshDiscovery(); refreshErr != nil {
+				continue
+			}
+			mapping, err = c.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("finding REST mapping for %v: %w", gvk, err)
+		}
 	}
 
 	var dr dynamic.ResourceInterface
