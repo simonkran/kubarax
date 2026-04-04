@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 
@@ -75,20 +76,9 @@ func (c *Client) applyObject(ctx context.Context, obj *unstructured.Unstructured
 	mapping, err := c.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		// CRDs applied earlier in the same manifest may not be established yet.
-		// Wait for the API server to register the resource, then retry.
-		log.Debug().Msgf("REST mapping not found for %v, waiting for CRD to be established...", gvk)
-		for i := 0; i < 15; i++ {
-			time.Sleep(2 * time.Second)
-			if refreshErr := c.RefreshDiscovery(); refreshErr != nil {
-				continue
-			}
-			mapping, err = c.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-			if err == nil {
-				break
-			}
-		}
+		mapping, err = c.waitForRESTMapping(ctx, gvk)
 		if err != nil {
-			return fmt.Errorf("finding REST mapping for %v: %w", gvk, err)
+			return err
 		}
 	}
 
@@ -121,4 +111,25 @@ func (c *Client) applyObject(ctx context.Context, obj *unstructured.Unstructured
 
 	log.Debug().Msgf("Applied %s/%s in %s", obj.GetKind(), obj.GetName(), obj.GetNamespace())
 	return nil
+}
+
+// waitForRESTMapping waits for a CRD to be established and returns its REST mapping.
+// This handles the case where CRDs and CRs are applied in the same manifest.
+func (c *Client) waitForRESTMapping(ctx context.Context, gvk schema.GroupVersionKind) (*meta.RESTMapping, error) {
+	log.Debug().Msgf("REST mapping not found for %v, waiting for CRD to be established...", gvk)
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("timed out waiting for CRD %v to be established: %w", gvk, ctx.Err())
+		case <-ticker.C:
+			if err := c.RefreshDiscovery(); err != nil {
+				continue
+			}
+			if mapping, err := c.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version); err == nil {
+				return mapping, nil
+			}
+		}
+	}
 }
