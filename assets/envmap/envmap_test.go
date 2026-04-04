@@ -74,6 +74,7 @@ func TestEnvMapGenerateExample(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "KUBARAX_PROJECT_NAME")
 	assert.Contains(t, string(data), "KUBARAX_FLUX_GIT_HTTPS_URL")
+	assert.Contains(t, string(data), "KUBARAX_ESS_VAULT_NAME")
 	assert.NotContains(t, string(data), "WEAVE_GITOPS")
 }
 
@@ -87,6 +88,7 @@ KUBARAX_FLUX_GIT_HTTPS_URL=https://github.com/org/repo
 KUBARAX_FLUX_GIT_USERNAME=git
 KUBARAX_FLUX_GIT_PAT_OR_PASSWORD=ghp_token
 KUBARAX_DOMAIN_NAME=example.com
+KUBARAX_ESS_VAULT_NAME=my-vault
 `
 	err := os.WriteFile(envPath, []byte(envContent), 0600)
 	require.NoError(t, err)
@@ -102,6 +104,7 @@ KUBARAX_DOMAIN_NAME=example.com
 	assert.Equal(t, "git", cfg.FluxGitUsername)
 	assert.Equal(t, "ghp_token", cfg.FluxGitPatOrPassword)
 	assert.Equal(t, "example.com", cfg.DomainName)
+	assert.Equal(t, "my-vault", cfg.ESSVaultName)
 }
 
 func TestEnvMapManagerLoadIgnoresComments(t *testing.T) {

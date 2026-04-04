@@ -25,6 +25,7 @@ type EnvMap struct {
 	HelmRepoURL      string `env:"HELM_REPO_URL" default:"" yaml:"HELM_REPO_URL"`
 
 	// Optional External Secrets Store authentication
+	ESSVaultName  string `env:"ESS_VAULT_NAME" default:"" yaml:"ESS_VAULT_NAME"`
 	ESSSecretName string `env:"ESS_SECRET_NAME" default:"" yaml:"ESS_SECRET_NAME"`
 	ESSTokenKey   string `env:"ESS_TOKEN_KEY" default:"" yaml:"ESS_TOKEN_KEY"`
 	ESSToken      string `env:"ESS_TOKEN" default:"" yaml:"ESS_TOKEN"`
@@ -131,6 +132,7 @@ KUBARAX_DOMAIN_NAME=<...>
 
 # Optional: External Secrets Store authentication secret
 # Creates a Kubernetes Secret in the external-secrets namespace for ClusterSecretStore auth
+# KUBARAX_ESS_VAULT_NAME=
 # KUBARAX_ESS_SECRET_NAME=eso-auth
 # KUBARAX_ESS_TOKEN_KEY=token
 # KUBARAX_ESS_TOKEN=

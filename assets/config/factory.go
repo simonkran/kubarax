@@ -6,7 +6,7 @@ import (
 
 // NewClusterFromEnv creates a new Cluster configuration from environment variables
 func NewClusterFromEnv(env *envmap.EnvMap) Cluster {
-	return Cluster{
+	cluster := Cluster{
 		Name:    env.ProjectName,
 		Stage:   env.ProjectStage,
 		Type:    "controlplane",
@@ -23,6 +23,12 @@ func NewClusterFromEnv(env *envmap.EnvMap) Cluster {
 		},
 		Services: DefaultServices(),
 	}
+
+	if envmap.IsConfiguredEnvValue(env.ESSVaultName) {
+		cluster.Services.ExternalSecrets.Vault = env.ESSVaultName
+	}
+
+	return cluster
 }
 
 // DefaultServices returns a Services config with sensible defaults
@@ -66,5 +72,8 @@ func CreateOrUpdateClusterFromEnv(cfg *Config, env *envmap.EnvMap) {
 	}
 	if env.FluxGitHTTPSUrl != "" && env.FluxGitHTTPSUrl != "<...>" {
 		c.FluxCD.Sync.URL = env.FluxGitHTTPSUrl
+	}
+	if envmap.IsConfiguredEnvValue(env.ESSVaultName) {
+		c.Services.ExternalSecrets.Vault = env.ESSVaultName
 	}
 }

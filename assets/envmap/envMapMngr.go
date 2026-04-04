@@ -124,6 +124,8 @@ func (em *EnvMapManager) setField(key, value string) {
 		em.config.HelmRepoPassword = value
 	case "HELM_REPO_URL":
 		em.config.HelmRepoURL = value
+	case "ESS_VAULT_NAME":
+		em.config.ESSVaultName = value
 	case "ESS_SECRET_NAME":
 		em.config.ESSSecretName = value
 	case "ESS_TOKEN_KEY":
