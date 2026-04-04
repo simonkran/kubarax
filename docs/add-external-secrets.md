@@ -12,7 +12,62 @@ services:
     status: enabled
 ```
 
-- A secret backend (Vault, AWS Secrets Manager, GCP Secret Manager, etc.)
+- A secret backend (Vault, AWS Secrets Manager, GCP Secret Manager, 1Password, etc.)
+
+## Secrets to Pre-Create in Your Secret Manager
+
+The generated ExternalSecret manifests expect certain entries to already exist in your secret backend **before** the corresponding platform services can reconcile. You only need to create secrets for services you have enabled in `config.yaml`.
+
+The default ClusterSecretStore name convention used in the generated templates is `{cluster-name}-{stage}` (e.g. `my-platform-prod`).
+
+### Core Platform Secrets
+
+| Service | Condition | Key | Property | Description |
+|---------|-----------|-----|----------|-------------|
+| cert-manager | solver = `cloudflare` | `cert-manager` | `cloudflare_api_token` | Cloudflare API token for DNS-01 challenge |
+| cert-manager | solver = `route53` | `cert-manager` | `access_key_id` | AWS access key for Route53 DNS-01 challenge |
+| cert-manager | solver = `route53` | `cert-manager` | `secret_access_key` | AWS secret key for Route53 DNS-01 challenge |
+| external-dns | default template uses Cloudflare | `cloudflare` | `api_token` | Cloudflare API token for DNS record management |
+| oauth2-proxy | SSO enabled | `oauth2-proxy` | `client-id` | OIDC client ID |
+| oauth2-proxy | SSO enabled | `oauth2-proxy` | `client-secret` | OIDC client secret |
+| oauth2-proxy | SSO enabled | `oauth2-proxy` | `cookie-secret` | Random 32-byte base64 cookie encryption key |
+| kube-prometheus-stack | Grafana OAuth enabled | `grafana` | `client-id` | Grafana OIDC client ID |
+| kube-prometheus-stack | Grafana OAuth enabled | `grafana` | `client-secret` | Grafana OIDC client secret |
+
+### Multi-Cluster & Repository Secrets
+
+These are only needed if you add worker clusters or additional Git repositories:
+
+| Use Case | Key | Property | Description |
+|----------|-----|----------|-------------|
+| Worker cluster kubeconfig | `k8s/{worker-name}` | `kubeconfig` | Full kubeconfig YAML for the worker cluster |
+| Git repository credentials | `git/{repo-name}` | `username` | Git username |
+| Git repository credentials | `git/{repo-name}` | `pat` | Git personal access token |
+
+### Example: 1Password
+
+If using [1Password Connect](https://developer.1password.com/docs/connect/) as your External Secrets provider, create items in your vault matching the key/property pairs above:
+
+| 1Password Vault | Item Name | Field | Example Value |
+|-----------------|-----------|-------|---------------|
+| `kubarax` | `cert-manager` | `cloudflare_api_token` | `cf-token-...` |
+| `kubarax` | `cloudflare` | `api_token` | `cf-token-...` |
+| `kubarax` | `oauth2-proxy` | `client-id` | `abc123` |
+| `kubarax` | `oauth2-proxy` | `client-secret` | `secret-...` |
+| `kubarax` | `oauth2-proxy` | `cookie-secret` | *(base64 random)* |
+| `kubarax` | `grafana` | `client-id` | `abc123` |
+| `kubarax` | `grafana` | `client-secret` | `secret-...` |
+
+### Example: HashiCorp Vault
+
+```bash
+vault kv put secret/cert-manager cloudflare_api_token="cf-token-..."
+vault kv put secret/cloudflare api_token="cf-token-..."
+vault kv put secret/oauth2-proxy client-id="abc123" client-secret="..." cookie-secret="$(openssl rand -base64 32)"
+vault kv put secret/grafana client-id="abc123" client-secret="..."
+```
+
+> **Note**: The **key** column maps to the secret path or item name in your provider. The **property** column maps to the field or attribute within that secret. Adjust path prefixes to match your ClusterSecretStore provider configuration.
 
 ## Setting Up a ClusterSecretStore
 
