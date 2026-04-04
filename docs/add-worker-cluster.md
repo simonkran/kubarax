@@ -81,7 +81,6 @@ This creates:
 - `managed-service-catalog/helm/` - Helm chart wrappers (shared across clusters)
 - `customer-service-catalog/helm/worker-0/` - Worker-specific FluxCD resources:
   - `flux-operator/fluxinstance.yaml` - FluxInstance config for the worker
-  - `flux-operator/resourceset-platform.yaml` - ResourceSet for platform deployment
   - `helmreleases/*.yaml` - HelmReleases for each enabled service
   - `kustomization.yaml` - Kustomize aggregator
 

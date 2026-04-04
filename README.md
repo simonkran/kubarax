@@ -112,10 +112,8 @@ customer-service-catalog/
     <cluster-name>/
       flux-operator/
         fluxinstance.yaml          # FluxInstance CR (manages Flux lifecycle + sync)
-        resourceset-platform.yaml  # ResourceSet for platform Kustomization
         resourceset-worker-clusters.yaml  # ResourceSet for worker cluster deployments
       flux-system/
-        kustomization.yaml         # FluxCD Kustomization for HelmReleases
         helmrepositories.yaml      # Upstream Helm repos
       helmreleases/
         cert-manager.yaml          # HelmRelease per service with dependsOn chains

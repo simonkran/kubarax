@@ -3,10 +3,8 @@ kind: Kustomization
 resources:
   # Flux Operator resources
   - flux-operator/fluxinstance.yaml
-  - flux-operator/resourceset-platform.yaml
   - flux-operator/resourceset-worker-clusters.yaml
   # Flux sources
-  - flux-system/kustomization.yaml
 {{- if .fluxcd.helmRepositories }}
   - flux-system/helmrepositories.yaml
 {{- end }}
