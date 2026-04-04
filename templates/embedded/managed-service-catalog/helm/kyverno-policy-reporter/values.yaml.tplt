@@ -1,8 +1,18 @@
 policy-reporter:
-  ui:
-    enabled: true
-    ingress:
+  sourceFilters: []
+  plugin:
+    kyverno:
       enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 100Mi
+        limits:
+          memory: 100Mi
+  ui:
+    enabled: false
+    ingress:
+      enabled: false
       className: {{ .ingressClassName | default "traefik" }}
       hosts:
         - host: policy-reporter.{{ .dnsName }}
