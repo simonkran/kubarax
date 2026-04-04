@@ -10,6 +10,7 @@ This guide covers how to set up the External Secrets Operator and configure a `C
 services:
   externalSecrets:
     status: enabled
+    vault: my-vault  # 1Password vault name
 ```
 
 - A 1Password account with a [service account token](https://developer.1password.com/docs/service-accounts/)

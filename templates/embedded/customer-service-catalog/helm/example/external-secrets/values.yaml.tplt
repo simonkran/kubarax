@@ -1,1 +1,15 @@
+{{- $es := index .services "externalSecrets" }}
+{{- if $es.vault }}
+clusterSecretStores:
+  {{ .name }}-{{ .stage }}:
+    provider:
+      onepasswordSDK:
+        vault: {{ $es.vault }}
+        auth:
+          serviceAccountSecretRef:
+            name: eso-auth
+            key: token
+            namespace: external-secrets
+{{- else }}
 clusterSecretStores: {}
+{{- end }}

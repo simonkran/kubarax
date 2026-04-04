@@ -139,7 +139,7 @@ type Services struct {
 	Traefik               GenericService     `yaml:"traefik" json:"traefik" jsonschema:"description=Traefik ingress controller"`
 	CertManager           CertManagerService `yaml:"certManager" json:"certManager" jsonschema:"description=Certificate manager"`
 	ExternalDNS           GenericService     `yaml:"externalDns" json:"externalDns" jsonschema:"description=External DNS"`
-	ExternalSecrets       GenericService     `yaml:"externalSecrets" json:"externalSecrets" jsonschema:"description=External Secrets Operator"`
+	ExternalSecrets       ExternalSecretsService `yaml:"externalSecrets" json:"externalSecrets" jsonschema:"description=External Secrets Operator"`
 	KubePrometheusStack   GenericService     `yaml:"kubePrometheusStack" json:"kubePrometheusStack" jsonschema:"description=Kube Prometheus Stack"`
 	Loki                  GenericService     `yaml:"loki" json:"loki" jsonschema:"description=Grafana Loki"`
 	MetricsServer         GenericService     `yaml:"metricsServer" json:"metricsServer" jsonschema:"description=Metrics Server"`
@@ -156,6 +156,12 @@ type Services struct {
 // GenericService represents a basic service with enable/disable status
 type GenericService struct {
 	Status string `yaml:"status" json:"status" jsonschema:"enum=enabled,enum=disabled,description=Service status"`
+}
+
+// ExternalSecretsService extends GenericService with 1Password SDK config
+type ExternalSecretsService struct {
+	Status string `yaml:"status" json:"status" jsonschema:"enum=enabled,enum=disabled,description=Service status"`
+	Vault  string `yaml:"vault,omitempty" json:"vault,omitempty" jsonschema:"description=1Password vault name for the ClusterSecretStore"`
 }
 
 // CertManagerService extends GenericService with cert-manager specific config

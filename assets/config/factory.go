@@ -31,7 +31,7 @@ func DefaultServices() Services {
 		Traefik:               GenericService{Status: ServiceEnabled},
 		CertManager:           CertManagerService{Status: ServiceEnabled},
 		ExternalDNS:           GenericService{Status: ServiceEnabled},
-		ExternalSecrets:       GenericService{Status: ServiceEnabled},
+		ExternalSecrets:       ExternalSecretsService{Status: ServiceEnabled},
 		KubePrometheusStack:   GenericService{Status: ServiceEnabled},
 		Loki:                  GenericService{Status: ServiceEnabled},
 		MetricsServer:         GenericService{Status: ServiceEnabled},
